@@ -5,6 +5,7 @@ import { BookSeat } from './use-cases/book-seat';
 import { CancelBooking } from './use-cases/cancel-booking';
 import { CancelTrip } from './use-cases/cancel-trip';
 import { GetBooking } from './use-cases/get-booking';
+import { ListOfficialLines } from './use-cases/list-official-lines';
 import { ListTrips } from './use-cases/list-trips';
 import { PublishTrip } from './use-cases/publish-trip';
 
@@ -223,5 +224,15 @@ describe('cancelling (application layer)', () => {
 
     await cancelTrip.execute({ managementCode: trip.managementCode });
     expect((await getBooking.execute(booking.bookingCode)).status).toBe('trajet-annule');
+  });
+});
+
+describe('official lines (application layer)', () => {
+  it('004-AS1: lists the official lines of a site', () => {
+    const lines = new ListOfficialLines().execute({ site: 'diamniadio' });
+
+    expect(lines).toHaveLength(2);
+    expect(lines.every((line) => line.site === 'diamniadio')).toBe(true);
+    expect(new ListOfficialLines().execute({ site: 'dakar' })).toEqual([]);
   });
 });

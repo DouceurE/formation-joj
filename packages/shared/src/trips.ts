@@ -134,3 +134,4 @@ export const officialLineListSchema = z.array(officialLineSchema);
 
 /** Paramètre de `GET /api/official-lines` : les lignes n'ont pas d'horaires, donc pas de date. */
 export const listOfficialLinesQuerySchema = z.object({ site: tripSiteSchema });
+export type ListOfficialLinesQuery = z.infer<typeof listOfficialLinesQuerySchema>;
