@@ -1,6 +1,6 @@
 # 006 — Accueil et départs
 
-**Statut** : Validée
+**Statut** : Implémentée
 **PRD** : specs/prd-covoiturage.md, TR6
 
 ## Contexte
