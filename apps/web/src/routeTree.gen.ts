@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DepartsRouteImport } from './routes/departs'
 import { Route as MesTrajetsRouteImport } from './routes/mes-trajets'
+import { Route as PublierRouteImport } from './routes/publier'
 import { Route as ReserverTripIdRouteImport } from './routes/reserver.$tripId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const MesTrajetsRoute = MesTrajetsRouteImport.update({
   path: '/mes-trajets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublierRoute = PublierRouteImport.update({
+  id: '/publier',
+  path: '/publier',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReserverTripIdRoute = ReserverTripIdRouteImport.update({
   id: '/reserver/$tripId',
   path: '/reserver/$tripId',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
   '/mes-trajets': typeof MesTrajetsRoute
+  '/publier': typeof PublierRoute
   '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
   '/mes-trajets': typeof MesTrajetsRoute
+  '/publier': typeof PublierRoute
   '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,29 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
   '/mes-trajets': typeof MesTrajetsRoute
+  '/publier': typeof PublierRoute
   '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/departs' | '/mes-trajets' | '/reserver/$tripId'
+  fullPaths:
+    '/' | '/departs' | '/mes-trajets' | '/publier' | '/reserver/$tripId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/departs' | '/mes-trajets' | '/reserver/$tripId'
-  id: '__root__' | '/' | '/departs' | '/mes-trajets' | '/reserver/$tripId'
+  to: '/' | '/departs' | '/mes-trajets' | '/publier' | '/reserver/$tripId'
+  id:
+    | '__root__'
+    | '/'
+    | '/departs'
+    | '/mes-trajets'
+    | '/publier'
+    | '/reserver/$tripId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DepartsRoute: typeof DepartsRoute
   MesTrajetsRoute: typeof MesTrajetsRoute
+  PublierRoute: typeof PublierRoute
   ReserverTripIdRoute: typeof ReserverTripIdRoute
 }
 
@@ -92,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MesTrajetsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/publier': {
+      id: '/publier'
+      path: '/publier'
+      fullPath: '/publier'
+      preLoaderRoute: typeof PublierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reserver/$tripId': {
       id: '/reserver/$tripId'
       path: '/reserver/$tripId'
@@ -106,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DepartsRoute: DepartsRoute,
   MesTrajetsRoute: MesTrajetsRoute,
+  PublierRoute: PublierRoute,
   ReserverTripIdRoute: ReserverTripIdRoute,
 }
 export const routeTree = rootRouteImport

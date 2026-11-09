@@ -13,12 +13,20 @@ export function SiteHeader() {
         >
           Dem
         </Link>
-        <Link
-          to="/mes-trajets"
-          className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold text-white underline-offset-4 hover:underline"
-        >
-          Mes trajets
-        </Link>
+        <nav aria-label="Menu" className="flex items-center gap-1">
+          <Link
+            to="/publier"
+            className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold text-white underline-offset-4 hover:underline"
+          >
+            Publier
+          </Link>
+          <Link
+            to="/mes-trajets"
+            className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold text-white underline-offset-4 hover:underline"
+          >
+            Mes trajets
+          </Link>
+        </nav>
         {/* Le logo officiel, affiché tel quel, sans recadrage ni filtre. */}
         <img
           src={BRAND_IMAGES.logo}
