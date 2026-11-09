@@ -5,6 +5,13 @@
 @import '@fontsource/bricolage-grotesque/latin-800.css';
 
 /*
+ * Les classes `dark:` des composants shadcn ne suivent pas le mode sombre du téléphone : elles
+ * n'existent qu'avec une classe `.dark`, que Dem ne pose jamais. Sans cette ligne, le bouton
+ * « Réessayer » tomberait sous le contraste AA sur un téléphone en mode sombre.
+ */
+@custom-variant dark (&:is(.dark *));
+
+/*
  * La charte de Dem. Les valeurs viennent de `src/brand/palette.ts`, dont le test vérifie le
  * contraste AA de chaque paire texte sur fond ; les rôles shadcn (`primary`…) y renvoient.
  */
