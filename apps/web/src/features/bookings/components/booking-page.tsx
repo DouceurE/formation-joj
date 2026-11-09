@@ -11,8 +11,10 @@ import {
 } from '@/features/trips/components/labels';
 import { cn } from '@/lib/utils';
 import { useBookSeat } from '../api/bookings.queries';
+import { savedBookings } from '../storage/saved-bookings';
 import { BookingForm } from './booking-form';
 import { bookingErrorMessage } from './booking-messages';
+import { BookingTicket } from './booking-ticket';
 import { RouteDrawing } from './route-drawing';
 import { SeatsCounter } from './seats-counter';
 
@@ -68,8 +70,18 @@ function BookingForTrip({ tripId, site, date }: { tripId: string; site: TripSite
           {bookingErrorMessage(booking.error)}
         </div>
       )}
-      {!booking.isSuccess && (
-        <BookingForm pending={booking.isPending} onSubmit={(input) => booking.mutate(input)} />
+      {booking.isSuccess ? (
+        <BookingTicket booking={booking.data} />
+      ) : (
+        <BookingForm
+          pending={booking.isPending}
+          onSubmit={(input) =>
+            booking.mutate(input, {
+              // Gardé dans le téléphone tout de suite, pour « Mes trajets ».
+              onSuccess: (confirmation) => savedBookings.save(confirmation.bookingCode),
+            })
+          }
+        />
       )}
     </div>
   );
