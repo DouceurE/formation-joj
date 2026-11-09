@@ -79,3 +79,12 @@ Six tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d'
 - [x] T04 [007-AS2, AS3] Écrire d'abord `apps/web/src/features/bookings/components/booking-ticket.test.tsx` (« 007-AS2: turns the ticket over to show the code and Jërëjëf ! »), puis `BookingTicket`, la copie, le lien WhatsApp et la mémoire du code après la réservation
 - [x] T05 [007-AS5, AS6] Écrire d'abord `apps/web/src/features/bookings/components/my-trips-page.test.tsx` (« 007-AS6: shows a trip cancelled by its driver in laterite red »), puis `MyTripsPage`, la route `/mes-trajets` et le lien « Mes trajets » de l'en-tête
 - [x] T06 [007-AS7] Écrire d'abord `apps/web/src/routes/reserver.a11y.test.tsx` et `mes-trajets.a11y.test.tsx` (« 007-AS7: the turned ticket is clean »), puis corriger ce que l'audit, la règle `motion-safe:` et la règle `min-h-11` relèvent
+
+## 7. Corrections
+
+### Passage 1
+
+Écarts bloquants relevés par le relecteur (base `6188629^`).
+
+- [ ] T07 [007-AS5] Écrire d'abord dans `apps/web/src/features/bookings/components/my-trips-page.test.tsx` (« 007-AS5: says « Aucune réservation avec ce code. » for a code of the wrong length »), un test où un code de 7 puis de 9 caractères donne « Aucune réservation avec ce code. », sans parler de nom ni de téléphone, puis faire de `VALIDATION_FAILED` reçu en cherchant un code la phrase du code inconnu dans `my-trips-page.tsx` ; preuve : relecteur, `my-trips-page.tsx` (`FindByCode.find`) et `booking-messages.ts` (un code de 7 caractères affiche « Vérifie ton nom et ton téléphone. »)
+- [ ] T08 [007-AS4] Écrire d'abord dans `apps/web/src/features/trips/components/departures-page.test.tsx` (« 007-AS4: shows a full trip as « 0 place restante » in the departures »), un test où le taxi complet du 11 novembre affiche « 0 place restante » dans la liste des départs, ce qui inscrit et prouve le changement de `remainingSeatsLabel` dans `labels.ts` fait en T03 ; preuve : relecteur, `apps/web/src/features/trips/components/labels.ts:35-37` (changement hors plan et sans test)
