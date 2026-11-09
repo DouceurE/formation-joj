@@ -480,6 +480,31 @@ describe('/api/trips/proposals (e2e, fake assistant)', () => {
     expect(late.body).toMatchObject({ status: 422, code: 'DEPARTURE_IN_PAST' });
   });
 
+  it('005-AS3: creates no trip when the confirmed proposal breaks a rule of TR1', async () => {
+    const day = '2031-04-20';
+    const car = (
+      await propose(
+        { ...ndiagaRead, vehicle: 'voiture', seats: 5, departureAt: `${day}T08:00:00.000Z` },
+        200,
+      )
+    ).body;
+    await api()
+      .post('/api/trips')
+      .send({ ...car, priceFcfa: 0, driverPhone: '77 123 45 67' })
+      .expect(400);
+    const past = (await propose({ ...ndiagaRead, departureAt: '2020-01-01T08:00:00.000Z' }, 200))
+      .body;
+    await api()
+      .post('/api/trips')
+      .send({ ...past, priceFcfa: 0, driverPhone: '77 123 45 67' })
+      .expect(422);
+
+    for (const date of [day, '2020-01-01']) {
+      const listed = await api().get(`/api/trips?site=diamniadio&date=${date}`).expect(200);
+      expect(listed.body).toEqual([]);
+    }
+  });
+
   it('005-AS4: refuses a message without a known site (422, PROPOSAL_SITE_NOT_FOUND)', async () => {
     const response = await propose({ ...ndiagaRead, site: null } as never, 422);
     expect(response.body).toMatchObject({ status: 422, code: 'PROPOSAL_SITE_NOT_FOUND' });
