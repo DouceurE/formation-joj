@@ -54,3 +54,20 @@ describe('proposeTrip refusal messages', () => {
     expect(() => proposeTrip({ ...extracted, departureAt: null })).toThrow(/departure time/);
   });
 });
+
+describe('proposeTrip with a date but no time', () => {
+  it.each(['2026-11-10', '2026-11-10T', '10/11/2026'])(
+    '005-AS5: refuses a date without a time (%j), never read as midnight',
+    (departureAt) => {
+      expect(() => proposeTrip({ ...extracted, departureAt })).toThrow(
+        rejection('PROPOSAL_DEPARTURE_NOT_FOUND'),
+      );
+    },
+  );
+
+  it('005-AS5: still accepts a full instant with its time', () => {
+    expect(
+      proposeTrip({ ...extracted, departureAt: '2026-11-10T08:00:00.000Z' }).departureAt,
+    ).toEqual(new Date('2026-11-10T08:00:00.000Z'));
+  });
+});

@@ -54,8 +54,12 @@ function requiredSite(site: string | null): TripSite {
   return site as TripSite;
 }
 
+/** Un instant ISO 8601 avec son heure : « 2026-11-10 » seul ne doit jamais devenir minuit. */
+const ISO_WITH_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+
 function requiredDeparture(departureAt: string | null): Date {
-  const date = departureAt === null ? null : new Date(departureAt);
+  const date =
+    departureAt !== null && ISO_WITH_TIME.test(departureAt) ? new Date(departureAt) : null;
   if (date === null || Number.isNaN(date.getTime())) {
     throw new TripError(
       'PROPOSAL_DEPARTURE_NOT_FOUND',
