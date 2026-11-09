@@ -99,3 +99,12 @@ Cinq tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d
 - [x] T03 [001-AS1, AS2, AS5] Écrire d'abord `application/trips.application.spec.ts` (« 001-AS1: publishes a trip with a management code », « 001-AS5: lists the trips of a site for a day by departure time »), puis le port `TripRepository`, le repository en mémoire, `generateManagementCode()`, `PublishTrip` et `ListTrips`
 - [x] T04 [001-AS5] Écrire d'abord `infra/drizzle-trip.repository.int.spec.ts` (« 001-AS5: keeps the trips of the day for the site, ordered by departure »), puis `trips.schema.ts`, la migration `pnpm db:generate --name=trips`, le mapper et `DrizzleTripRepository`
 - [x] T05 [001-AS1, AS2, AS3, AS4, AS5, AS6] Écrire d'abord `apps/api/test/trips.e2e.spec.ts` (« 001-AS2: rejects a car with 5 seats (400, SEATS_OUT_OF_RANGE) »), puis `trips.controller.ts`, `trips.module.ts` et l'import dans `app.module.ts`
+
+## 7. Corrections
+
+### Passage 1
+
+Écarts bloquants relevés par le relecteur (base `589b45c^`).
+
+- [ ] T06 [001-AS4] Écrire d'abord dans `apps/api/test/trips.e2e.spec.ts` (« 001-AS4: publishes a trip priced 3 000 000 000 FCFA without a server error »), puis élargir la colonne `price_fcfa` en `bigint` (mode `number`) dans `trips.schema.ts` et générer la migration `pnpm db:generate --name=trips-price-bigint` ; preuve : relecteur, `packages/shared/src/trips.ts:32`, `domain/trip.ts:157`, `infra/trips.schema.ts:17` (un prix accepté par la validation dépasse `integer` et renvoie 500)
+- [ ] T07 [001-AS5] Écrire d'abord dans `infra/drizzle-trip.repository.int.spec.ts` et `application/trips.application.spec.ts` (« 001-AS5: lists a trip that has already departed first »), un jour déjà écoulé (2025-11-10) où le trajet de 8 h, passé par rapport à l'heure réelle, reste listé en premier ; test de couverture, il peut passer d'emblée ; preuve : relecteur, `trips.application.spec.ts:67`, `drizzle-trip.repository.int.spec.ts:48` (aucun test ne prouve « même s'il est déjà parti »)
