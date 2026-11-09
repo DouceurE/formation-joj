@@ -1,6 +1,6 @@
 # 008 — Publier
 
-**Statut** : Validée
+**Statut** : Implémentée
 **PRD** : specs/prd-covoiturage.md, TR8
 
 ## Contexte
