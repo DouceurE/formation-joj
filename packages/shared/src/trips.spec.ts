@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  proposeTripSchema,
+  tripProposalSchema,
   listOfficialLinesQuerySchema,
   OFFICIAL_LINE_OPERATORS,
   officialLineSchema,
@@ -174,5 +176,36 @@ describe('official line schemas', () => {
     expect(
       listOfficialLinesQuerySchema.safeParse({ site: 'thies' }).error?.issues[0]?.path,
     ).toEqual(['site']);
+  });
+});
+
+describe('message proposal schemas', () => {
+  it('005-AS1: accepts a message of at most 1000 characters, trimmed', () => {
+    const message = ' je pars de Pikine pour Diamniadio demain 8h, Ndiaga 38 places ';
+    expect(proposeTripSchema.parse({ message })).toEqual({ message: message.trim() });
+    expect(proposeTripSchema.safeParse({ message: 'a'.repeat(1000) }).success).toBe(true);
+  });
+
+  it.each(['', '   ', 'a'.repeat(1001)])(
+    '005-AS1: rejects an empty or too long message',
+    (message) => {
+      expect(proposeTripSchema.safeParse({ message }).error?.issues[0]?.path).toEqual(['message']);
+    },
+  );
+
+  it('005-AS1: describes a proposal whose unknown fields are null', () => {
+    const proposal = {
+      vehicle: 'ndiaga-ndiaye',
+      departurePlace: 'Pikine',
+      site: 'diamniadio',
+      departureAt: '2026-11-10T08:00:00.000Z',
+      seats: 38,
+      priceFcfa: null,
+    };
+    expect(tripProposalSchema.parse(proposal)).toEqual(proposal);
+    expect(
+      tripProposalSchema.parse({ ...proposal, vehicle: null, seats: null }).vehicle,
+    ).toBeNull();
+    expect(tripProposalSchema.safeParse({ ...proposal, site: null }).success).toBe(false);
   });
 });

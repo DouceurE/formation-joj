@@ -135,3 +135,25 @@ export const officialLineListSchema = z.array(officialLineSchema);
 /** Paramètre de `GET /api/official-lines` : les lignes n'ont pas d'horaires, donc pas de date. */
 export const listOfficialLinesQuerySchema = z.object({ site: tripSiteSchema });
 export type ListOfficialLinesQuery = z.infer<typeof listOfficialLinesQuerySchema>;
+
+export const TRIP_MESSAGE_MAX_LENGTH = 1000;
+
+/** Corps de `POST /api/trips/proposals` : l'annonce collée telle quelle par le conducteur. */
+export const proposeTripSchema = z.object({
+  message: z.string().trim().min(1).max(TRIP_MESSAGE_MAX_LENGTH),
+});
+export type ProposeTripInput = z.infer<typeof proposeTripSchema>;
+
+/**
+ * Le trajet que l'assistant propose, à relire puis publier par `POST /api/trips`.
+ * Le site et le départ sont toujours trouvés ; le reste vaut null si le message ne le dit pas.
+ */
+export const tripProposalSchema = z.object({
+  vehicle: tripVehicleSchema.nullable(),
+  departurePlace: z.string().nullable(),
+  site: tripSiteSchema,
+  departureAt: z.iso.datetime(),
+  seats: z.int().nullable(),
+  priceFcfa: z.int().nullable(),
+});
+export type TripProposalResponse = z.infer<typeof tripProposalSchema>;

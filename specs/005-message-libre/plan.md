@@ -75,7 +75,7 @@ Chaque scénario de la spec est prouvé par au moins un test, au niveau le plus 
 
 Cinq tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d'abord et cite les scénarios qu'elle couvre ; elle tient dans un commit.
 
-- [ ] T01 [005-AS1] Écrire d'abord dans `packages/shared/src/trips.spec.ts` (« 005-AS1: accepts a message of at most 1000 characters »), puis `TRIP_MESSAGE_MAX_LENGTH`, `proposeTripSchema` et `tripProposalSchema`
+- [x] T01 [005-AS1] Écrire d'abord dans `packages/shared/src/trips.spec.ts` (« 005-AS1: accepts a message of at most 1000 characters »), puis `TRIP_MESSAGE_MAX_LENGTH`, `proposeTripSchema` et `tripProposalSchema`
 - [ ] T02 [005-AS1, AS4, AS5] Écrire d'abord `domain/trip-proposal.spec.ts` (« 005-AS4: refuses a message without a known site », « 005-AS5: refuses a message without a departure time »), puis `trip-proposal.ts` et les nouveaux codes de `trips.errors.ts`
 - [ ] T03 [005-AS1, AS6] Écrire d'abord dans `application/trips.application.spec.ts` (« 005-AS1: proposes a trip without publishing it », « 005-AS6: refuses when the assistant is unavailable »), puis le port `TripExtractor`, le faux assistant et `ProposeTripFromMessage`
 - [ ] T04 [005-AS1, AS6] Écrire d'abord `infra/claude-trip-extractor.spec.ts` (« 005-AS6: turns a refusal into ASSISTANT_UNAVAILABLE »), puis la dépendance `@anthropic-ai/sdk`, `ClaudeTripExtractor` et la ligne `ANTHROPIC_API_KEY` de `.env.example`
