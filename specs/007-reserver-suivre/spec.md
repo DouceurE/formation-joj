@@ -1,6 +1,6 @@
 # 007 — Réserver et suivre
 
-**Statut** : Validée
+**Statut** : Implémentée
 **PRD** : specs/prd-covoiturage.md, TR7
 
 ## Contexte
