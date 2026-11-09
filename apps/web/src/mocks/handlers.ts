@@ -3,9 +3,14 @@ import {
   bookingCodeParamsSchema,
   bookSeatSchema,
   cancelBookingSchema,
+  cancelTripSchema,
   listOfficialLinesQuerySchema,
   listTripsQuerySchema,
   type ProblemDetails,
+  proposeTripSchema,
+  publishTripSchema,
+  type TripResponse,
+  VEHICLE_MAX_SEATS,
 } from '@joj/shared';
 import { delay, http, HttpResponse, type RequestHandler } from 'msw';
 import type { z } from 'zod';
@@ -86,6 +91,66 @@ export const handlers: RequestHandler[] = [
     return HttpResponse.json(trips);
   }),
 
+  // Comme l'API (TR1) : un départ passé, puis des places hors des limites du véhicule.
+  http.post('*/api/trips', async ({ request }) => {
+    const failure = await gate('POST', '/api/trips');
+    if (failure) return failure;
+    const parsed = publishTripSchema.safeParse(await request.json());
+    if (!parsed.success) return validationFailed(parsed.error);
+    const input = parsed.data;
+    if (Date.parse(input.departureAt) < Date.parse(MOCK_NOW)) {
+      return problem(422, 'DEPARTURE_IN_PAST', 'A trip cannot depart in the past');
+    }
+    const max = VEHICLE_MAX_SEATS[input.vehicle];
+    if (input.seats < 1 || input.seats > max) {
+      return problem(400, 'SEATS_OUT_OF_RANGE', `A ${input.vehicle} has 1 to ${max} seats`, {
+        details: { vehicle: input.vehicle, seats: input.seats, min: 1, max },
+      });
+    }
+    const trip: TripResponse = {
+      id: crypto.randomUUID(),
+      vehicle: input.vehicle,
+      departurePlace: input.departurePlace,
+      site: input.site,
+      departureAt: new Date(input.departureAt).toISOString(),
+      seats: input.seats,
+      remainingSeats: input.seats,
+      priceFcfa: input.priceFcfa,
+      createdAt: MOCK_NOW,
+    };
+    const managementCode = newCode();
+    fixture.trips.push(trip);
+    fixture.managementCodes[managementCode] = trip.id;
+    return HttpResponse.json({ ...trip, managementCode }, { status: 201 });
+  }),
+
+  // Comme l'API (TR5), sans appeler l'assistant : la réponse est celle que le test a choisie.
+  http.post('*/api/trips/proposals', async ({ request }) => {
+    const failure = await gate('POST', '/api/trips/proposals');
+    if (failure) return failure;
+    const parsed = proposeTripSchema.safeParse(await request.json());
+    if (!parsed.success) return validationFailed(parsed.error);
+    const answer = fixture.proposalAnswer;
+    return typeof answer === 'string'
+      ? problem(422, answer, PROPOSAL_REFUSALS[answer])
+      : HttpResponse.json(answer);
+  }),
+
+  // Comme l'API (TR3) : annuler une seule fois ; le trajet quitte alors les départs.
+  http.post('*/api/trips/cancel', async ({ request }) => {
+    const failure = await gate('POST', '/api/trips/cancel');
+    if (failure) return failure;
+    const parsed = cancelTripSchema.safeParse(await request.json());
+    if (!parsed.success) return validationFailed(parsed.error);
+    const tripId = fixture.managementCodes[parsed.data.managementCode];
+    if (!tripId) return problem(404, 'TRIP_NOT_FOUND', 'No trip with this management code');
+    if (fixture.cancelledTripIds.includes(tripId)) {
+      return problem(409, 'TRIP_ALREADY_CANCELLED', `Trip ${tripId} is already cancelled`);
+    }
+    fixture.cancelledTripIds.push(tripId);
+    return HttpResponse.json({ id: tripId, cancelledAt: new Date().toISOString() });
+  }),
+
   // Comme l'API (TR4) : les lignes officielles du site, dans l'ordre de la liste fixe.
   http.get('*/api/official-lines', async ({ request }) => {
     const failure = await gate('GET', '/api/official-lines');
@@ -118,7 +183,7 @@ export const handlers: RequestHandler[] = [
     if (trip.remainingSeats <= 0) return problem(409, 'TRIP_FULL', 'This trip is full');
     const booking: MockBooking = {
       id: crypto.randomUUID(),
-      bookingCode: newBookingCode(),
+      bookingCode: newCode(),
       tripId: trip.id,
       passengerName: parsed.data.passengerName,
       passengerPhone: phone,
@@ -160,12 +225,21 @@ export const handlers: RequestHandler[] = [
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-function newBookingCode(): string {
+/** Un code de réservation ou de gestion : 8 caractères faciles à lire. */
+function newCode(): string {
   return Array.from(
     { length: 8 },
     () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)],
   ).join('');
 }
+
+/** Les mêmes messages que l'API (`domain/trip-proposal.ts`, `trips.errors.ts`). */
+const PROPOSAL_REFUSALS = {
+  PROPOSAL_SITE_NOT_FOUND: 'No site among Dakar, Diamniadio and Saly was found in the message',
+  PROPOSAL_DEPARTURE_NOT_FOUND: 'No departure time was found in the message',
+  ASSISTANT_UNAVAILABLE:
+    'The assistant could not read the message; please fill in the trip form instead',
+} as const;
 
 const activeBookings = (tripId: string) =>
   fixture.bookings.filter((b) => b.tripId === tripId && !b.cancelledAt);

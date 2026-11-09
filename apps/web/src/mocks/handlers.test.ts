@@ -5,17 +5,24 @@
 import {
   bookingConfirmationSchema,
   bookingViewSchema,
+  cancelledTripSchema,
   officialLineListSchema,
+  publishedTripSchema,
   tripListSchema,
+  tripProposalSchema,
 } from '@joj/shared';
 import { describe, expect, it } from 'vitest';
 import {
   BOOKING_ON_CANCELLED_TRIP,
+  cancelledTrip,
   carAt8,
   departedCar,
   DRIVER_PHONES,
+  fixture,
   fullTaxi,
+  MANAGEMENT_CODES,
   ndiagaAt10,
+  pikineProposal,
 } from './fixture';
 
 const call = (path: string) => fetch(`http://localhost${path}`);
@@ -144,5 +151,121 @@ describe('mock bookings API', () => {
   it('007-AS6: shows « trajet annulé » for a booking on a trip cancelled by its driver', async () => {
     const response = await call(`/api/bookings/${BOOKING_ON_CANCELLED_TRIP}`);
     expect(await response.json()).toMatchObject({ status: 'trajet-annule' });
+  });
+});
+
+const ndiagaFromPikine = {
+  vehicle: 'ndiaga-ndiaye',
+  departurePlace: 'Pikine',
+  site: 'diamniadio',
+  departureAt: '2026-11-10T08:00:00.000Z',
+  seats: 38,
+  priceFcfa: 500,
+  driverPhone: '77 123 45 67',
+};
+
+describe('mock trip publication API', () => {
+  it('008-AS1: publishes a trip with its management code and lists it among the departures', async () => {
+    const response = await post('/api/trips', ndiagaFromPikine);
+
+    expect(response.status).toBe(201);
+    const published = publishedTripSchema.parse(await response.json());
+    expect(published).toMatchObject({ vehicle: 'ndiaga-ndiaye', seats: 38, remainingSeats: 38 });
+    const trips = tripListSchema.parse(
+      await (await call('/api/trips?site=diamniadio&date=2026-11-10')).json(),
+    );
+    const listed = trips.find((trip) => trip.id === published.id);
+    expect(listed).toMatchObject({ departurePlace: 'Pikine', remainingSeats: 38 });
+    expect(listed).not.toHaveProperty('managementCode');
+  });
+
+  it('008-AS2: refuses a car with 5 seats like the API (400, SEATS_OUT_OF_RANGE)', async () => {
+    const response = await post('/api/trips', {
+      ...ndiagaFromPikine,
+      vehicle: 'voiture',
+      seats: 5,
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      code: 'SEATS_OUT_OF_RANGE',
+      details: { vehicle: 'voiture', max: 4 },
+    });
+  });
+
+  it('008-AS2: refuses a departure in the past (422, DEPARTURE_IN_PAST)', async () => {
+    const response = await post('/api/trips', {
+      ...ndiagaFromPikine,
+      departureAt: '2026-11-09T08:00:00.000Z',
+    });
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ code: 'DEPARTURE_IN_PAST' });
+  });
+
+  it('008-AS2: refuses a trip without a phone (400, VALIDATION_FAILED)', async () => {
+    const { driverPhone: _phone, ...withoutPhone } = ndiagaFromPikine;
+    const response = await post('/api/trips', withoutPhone);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      errors: [expect.objectContaining({ path: 'driverPhone' })],
+    });
+  });
+
+  it('008-AS3: reads an announcement into a proposal, without publishing it', async () => {
+    const before = await (await call('/api/trips?site=diamniadio&date=2026-11-10')).json();
+
+    const response = await post('/api/trips/proposals', {
+      message: 'je pars de Pikine pour Diamniadio demain 8h, Ndiaga 38 places',
+    });
+
+    expect(response.status).toBe(200);
+    expect(tripProposalSchema.parse(await response.json())).toEqual(pikineProposal);
+    const after = await (await call('/api/trips?site=diamniadio&date=2026-11-10')).json();
+    expect(after).toEqual(before);
+  });
+
+  it.each([
+    'PROPOSAL_SITE_NOT_FOUND',
+    'PROPOSAL_DEPARTURE_NOT_FOUND',
+    'ASSISTANT_UNAVAILABLE',
+  ] as const)('008-AS4: answers %s (422) when the test chooses it', async (code) => {
+    fixture.proposalAnswer = code;
+
+    const response = await post('/api/trips/proposals', { message: 'on se voit au stade' });
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ code });
+  });
+
+  it('008-AS5: cancels a trip with its management code and removes it from the departures', async () => {
+    const response = await post('/api/trips/cancel', {
+      managementCode: MANAGEMENT_CODES[ndiagaAt10.id],
+    });
+
+    expect(response.status).toBe(200);
+    expect(cancelledTripSchema.parse(await response.json())).toMatchObject({ id: ndiagaAt10.id });
+    const trips = await (await call('/api/trips?site=diamniadio&date=2026-11-10')).json();
+    expect(trips).toEqual([carAt8]);
+  });
+
+  it('008-AS5: refuses an unknown code (404) and a trip already cancelled (409)', async () => {
+    const unknown = await post('/api/trips/cancel', { managementCode: 'ZZZZ9999' });
+    expect(unknown.status).toBe(404);
+    expect(await unknown.json()).toMatchObject({ code: 'TRIP_NOT_FOUND' });
+
+    const again = await post('/api/trips/cancel', {
+      managementCode: MANAGEMENT_CODES[cancelledTrip.id],
+    });
+    expect(again.status).toBe(409);
+    expect(await again.json()).toMatchObject({ code: 'TRIP_ALREADY_CANCELLED' });
+  });
+
+  it('008-AS5: refuses a code that is not 8 characters (400, VALIDATION_FAILED)', async () => {
+    const response = await post('/api/trips/cancel', { managementCode: 'ABC' });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
   });
 });

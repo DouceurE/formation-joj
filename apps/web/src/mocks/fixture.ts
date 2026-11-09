@@ -1,4 +1,4 @@
-import type { OfficialLineResponse, TripResponse } from '@joj/shared';
+import type { OfficialLineResponse, TripProposalResponse, TripResponse } from '@joj/shared';
 
 /**
  * Les données de la fausse API, en mémoire. Les handlers les lisent et les modifient comme la
@@ -131,6 +131,33 @@ export interface MockBooking {
   cancelledAt: string | null;
 }
 
+/** Le code de gestion de chaque trajet : l'API ne le remet qu'au conducteur qui publie. */
+export const MANAGEMENT_CODES: Readonly<Record<string, string>> = {
+  [ndiagaAt10.id]: 'NDIAGA10',
+  [carAt8.id]: 'VOITUR08',
+  [taxiToSaly.id]: 'TAXISALY',
+  [fullTaxi.id]: 'TAXIPLEN',
+  [departedCar.id]: 'PARTIE08',
+  [cancelledTrip.id]: 'ANNULE08',
+};
+
+/** Ce que l'assistant comprend de « je pars de Pikine pour Diamniadio demain 8h, Ndiaga 38 places ». */
+export const pikineProposal: TripProposalResponse = {
+  vehicle: 'ndiaga-ndiaye',
+  departurePlace: 'Pikine',
+  site: 'diamniadio',
+  departureAt: '2026-11-10T08:00:00.000Z',
+  seats: 38,
+  priceFcfa: null,
+};
+
+/** La réponse de la fausse API à une annonce : une proposition, ou le refus choisi par le test. */
+export type ProposalAnswer =
+  | TripProposalResponse
+  | 'PROPOSAL_SITE_NOT_FOUND'
+  | 'PROPOSAL_DEPARTURE_NOT_FOUND'
+  | 'ASSISTANT_UNAVAILABLE';
+
 /** Le code d'une réservation sur le trajet annulé par son conducteur. */
 export const BOOKING_ON_CANCELLED_TRIP = 'ANNULE23';
 
@@ -139,6 +166,9 @@ const initial = (): {
   officialLines: OfficialLineResponse[];
   bookings: MockBooking[];
   cancelledTripIds: string[];
+  /** Code de gestion → identifiant du trajet. */
+  managementCodes: Record<string, string>;
+  proposalAnswer: ProposalAnswer;
 } => ({
   trips: [ndiagaAt10, carAt8, taxiToSaly, fullTaxi, departedCar, cancelledTrip].map((trip) => ({
     ...trip,
@@ -156,6 +186,10 @@ const initial = (): {
     },
   ],
   cancelledTripIds: [cancelledTrip.id],
+  managementCodes: Object.fromEntries(
+    Object.entries(MANAGEMENT_CODES).map(([tripId, code]) => [code, tripId]),
+  ),
+  proposalAnswer: { ...pikineProposal },
 });
 
 export const fixture = initial();
