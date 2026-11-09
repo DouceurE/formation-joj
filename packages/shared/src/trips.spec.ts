@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  listOfficialLinesQuerySchema,
+  OFFICIAL_LINE_OPERATORS,
+  officialLineSchema,
   BOOKING_STATUSES,
   bookingCodeParamsSchema,
   bookingViewSchema,
@@ -148,5 +151,28 @@ describe('cancellation schemas', () => {
     };
     expect(bookingViewSchema.parse(view)).toEqual(view);
     expect(bookingViewSchema.safeParse({ ...view, status: 'perdue' }).success).toBe(false);
+  });
+});
+
+describe('official line schemas', () => {
+  const line = {
+    id: '0199f5c2-0000-7000-8000-0000000a0001',
+    operator: 'navette-joj',
+    name: 'Navette JOJ Dakar → Diamniadio (exemple)',
+    departurePoint: 'Place de la Nation (exemple)',
+    site: 'diamniadio',
+  };
+
+  it('004-AS1: describes an official line with its operator', () => {
+    expect(OFFICIAL_LINE_OPERATORS).toEqual(['navette-joj', 'dakar-dem-dikk']);
+    expect(officialLineSchema.parse(line)).toEqual(line);
+    expect(officialLineSchema.safeParse({ ...line, operator: 'taxi' }).success).toBe(false);
+  });
+
+  it('004-AS3: asks for one of the three sites', () => {
+    expect(listOfficialLinesQuerySchema.parse({ site: 'dakar' })).toEqual({ site: 'dakar' });
+    expect(
+      listOfficialLinesQuerySchema.safeParse({ site: 'thies' }).error?.issues[0]?.path,
+    ).toEqual(['site']);
   });
 });

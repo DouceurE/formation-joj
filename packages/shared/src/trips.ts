@@ -114,3 +114,23 @@ export type BookingViewResponse = z.infer<typeof bookingViewSchema>;
 /** La réponse à l'annulation d'un trajet. */
 export const cancelledTripSchema = z.object({ id: z.uuid(), cancelledAt: z.iso.datetime() });
 export type CancelledTripResponse = z.infer<typeof cancelledTripSchema>;
+
+/** Les exploitants des lignes officielles, qui ne se réservent pas dans l'application. */
+export const OFFICIAL_LINE_OPERATORS = ['navette-joj', 'dakar-dem-dikk'] as const;
+export const officialLineOperatorSchema = z.enum(OFFICIAL_LINE_OPERATORS);
+export type OfficialLineOperator = z.infer<typeof officialLineOperatorSchema>;
+
+/** Une ligne officielle vers un site : une alternative au covoiturage. */
+export const officialLineSchema = z.object({
+  id: z.uuid(),
+  operator: officialLineOperatorSchema,
+  name: z.string(),
+  departurePoint: z.string(),
+  site: tripSiteSchema,
+});
+export type OfficialLineResponse = z.infer<typeof officialLineSchema>;
+
+export const officialLineListSchema = z.array(officialLineSchema);
+
+/** Paramètre de `GET /api/official-lines` : les lignes n'ont pas d'horaires, donc pas de date. */
+export const listOfficialLinesQuerySchema = z.object({ site: tripSiteSchema });

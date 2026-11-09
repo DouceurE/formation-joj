@@ -60,7 +60,7 @@ Chaque scénario de la spec est prouvé par au moins un test, au niveau le plus 
 
 Quatre tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d'abord et cite les scénarios qu'elle couvre ; elle tient dans un commit.
 
-- [ ] T01 [004-AS1, AS3] Écrire d'abord dans `packages/shared/src/trips.spec.ts` (« 004-AS1: describes an official line with its operator »), puis `OFFICIAL_LINE_OPERATORS`, `officialLineSchema`, `officialLineListSchema` et `listOfficialLinesQuerySchema`
+- [x] T01 [004-AS1, AS3] Écrire d'abord dans `packages/shared/src/trips.spec.ts` (« 004-AS1: describes an official line with its operator »), puis `OFFICIAL_LINE_OPERATORS`, `officialLineSchema`, `officialLineListSchema` et `listOfficialLinesQuerySchema`
 - [ ] T02 [004-AS1, AS3, AS4] Écrire d'abord `domain/official-lines.spec.ts` (« 004-AS1: lists the two official lines to Diamniadio », « 004-AS3: has no official line to Dakar »), puis `OFFICIAL_LINES` et `officialLinesTo()` dans `domain/official-lines.ts`
 - [ ] T03 [004-AS1] Écrire d'abord dans `application/trips.application.spec.ts` (« 004-AS1: lists the official lines of a site »), puis `ListOfficialLines`
 - [ ] T04 [004-AS1, AS2, AS3, AS4] Écrire d'abord dans `apps/api/test/trips.e2e.spec.ts` (« 004-AS4: refuses a booking on an official line (404, TRIP_NOT_FOUND) »), puis `official-lines.controller.ts` et les déclarations dans `trips.module.ts`
