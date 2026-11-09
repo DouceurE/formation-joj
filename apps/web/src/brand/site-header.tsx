@@ -13,6 +13,12 @@ export function SiteHeader() {
         >
           Dem
         </Link>
+        <Link
+          to="/mes-trajets"
+          className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold text-white underline-offset-4 hover:underline"
+        >
+          Mes trajets
+        </Link>
         {/* Le logo officiel, affiché tel quel, sans recadrage ni filtre. */}
         <img
           src={BRAND_IMAGES.logo}

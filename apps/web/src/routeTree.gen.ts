@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DepartsRouteImport } from './routes/departs'
+import { Route as MesTrajetsRouteImport } from './routes/mes-trajets'
 import { Route as ReserverTripIdRouteImport } from './routes/reserver.$tripId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const DepartsRoute = DepartsRouteImport.update({
   path: '/departs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MesTrajetsRoute = MesTrajetsRouteImport.update({
+  id: '/mes-trajets',
+  path: '/mes-trajets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReserverTripIdRoute = ReserverTripIdRouteImport.update({
   id: '/reserver/$tripId',
   path: '/reserver/$tripId',
@@ -32,30 +38,34 @@ const ReserverTripIdRoute = ReserverTripIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
+  '/mes-trajets': typeof MesTrajetsRoute
   '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
+  '/mes-trajets': typeof MesTrajetsRoute
   '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
+  '/mes-trajets': typeof MesTrajetsRoute
   '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/departs' | '/reserver/$tripId'
+  fullPaths: '/' | '/departs' | '/mes-trajets' | '/reserver/$tripId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/departs' | '/reserver/$tripId'
-  id: '__root__' | '/' | '/departs' | '/reserver/$tripId'
+  to: '/' | '/departs' | '/mes-trajets' | '/reserver/$tripId'
+  id: '__root__' | '/' | '/departs' | '/mes-trajets' | '/reserver/$tripId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DepartsRoute: typeof DepartsRoute
+  MesTrajetsRoute: typeof MesTrajetsRoute
   ReserverTripIdRoute: typeof ReserverTripIdRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DepartsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mes-trajets': {
+      id: '/mes-trajets'
+      path: '/mes-trajets'
+      fullPath: '/mes-trajets'
+      preLoaderRoute: typeof MesTrajetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reserver/$tripId': {
       id: '/reserver/$tripId'
       path: '/reserver/$tripId'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DepartsRoute: DepartsRoute,
+  MesTrajetsRoute: MesTrajetsRoute,
   ReserverTripIdRoute: ReserverTripIdRoute,
 }
 export const routeTree = rootRouteImport
