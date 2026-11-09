@@ -95,7 +95,7 @@ Chaque scénario de la spec est prouvé par au moins un test, au niveau le plus 
 Cinq tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d'abord et cite les scénarios qu'elle couvre ; elle tient dans un commit.
 
 - [x] T01 [001-AS4] Écrire d'abord `packages/shared/src/trips.spec.ts` (« 001-AS4: rejects an unknown site »), puis `packages/shared/src/trips.ts` et son export dans `index.ts`
-- [ ] T02 [001-AS1, AS2, AS3, AS4] Écrire d'abord `domain/trip.spec.ts` (« 001-AS2: rejects 5 seats in a car », « 001-AS3: rejects a departure one minute in the past »), puis `trip.ts` et `trips.errors.ts`
+- [x] T02 [001-AS1, AS2, AS3, AS4] Écrire d'abord `domain/trip.spec.ts` (« 001-AS2: rejects 5 seats in a car », « 001-AS3: rejects a departure one minute in the past »), puis `trip.ts` et `trips.errors.ts`
 - [ ] T03 [001-AS1, AS2, AS5] Écrire d'abord `application/trips.application.spec.ts` (« 001-AS1: publishes a trip with a management code », « 001-AS5: lists the trips of a site for a day by departure time »), puis le port `TripRepository`, le repository en mémoire, `generateManagementCode()`, `PublishTrip` et `ListTrips`
 - [ ] T04 [001-AS5] Écrire d'abord `infra/drizzle-trip.repository.int.spec.ts` (« 001-AS5: keeps the trips of the day for the site, ordered by departure »), puis `trips.schema.ts`, la migration `pnpm db:generate --name=trips`, le mapper et `DrizzleTripRepository`
 - [ ] T05 [001-AS1, AS2, AS3, AS4, AS5, AS6] Écrire d'abord `apps/api/test/trips.e2e.spec.ts` (« 001-AS2: rejects a car with 5 seats (400, SEATS_OUT_OF_RANGE) »), puis `trips.controller.ts`, `trips.module.ts` et l'import dans `app.module.ts`
