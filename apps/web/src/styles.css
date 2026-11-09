@@ -1,52 +1,55 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+/* Polices hébergées avec le site : aucune connexion de plus sur une 4G lente. */
+@import '@fontsource-variable/inter';
+@import '@fontsource/bricolage-grotesque/latin-800.css';
 
-@custom-variant dark (&:is(.dark *));
-
+/*
+ * La charte de Dem. Les valeurs viennent de `src/brand/palette.ts`, dont le test vérifie le
+ * contraste AA de chaque paire texte sur fond ; les rôles shadcn (`primary`…) y renvoient.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.625rem;
-}
+  --baobab: #0b5d3b;
+  --soleil: #f2b51d;
+  --laterite: #d64933;
+  --laterite-fonce: #b83a27;
+  --atlantique: #1c6e8c;
+  --sable: #fbf7ef;
+  --texte: #14261c;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: var(--sable);
+  --foreground: var(--texte);
+  --card: #ffffff;
+  --card-foreground: var(--texte);
+  --popover: #ffffff;
+  --popover-foreground: var(--texte);
+  --primary: var(--baobab);
+  --primary-foreground: #ffffff;
+  --secondary: var(--soleil);
+  --secondary-foreground: var(--texte);
+  --muted: #efe8d8;
+  --muted-foreground: var(--texte);
+  --accent: var(--soleil);
+  --accent-foreground: var(--texte);
+  --destructive: var(--laterite-fonce);
+  --border: #d9cfb8;
+  --input: #c9bc9c;
+  --ring: var(--baobab);
+  --radius: 0.75rem;
 }
 
 @theme inline {
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Inter Variable', system-ui, sans-serif;
+
+  --color-baobab: var(--baobab);
+  --color-soleil: var(--soleil);
+  --color-laterite: var(--laterite);
+  --color-laterite-fonce: var(--laterite-fonce);
+  --color-atlantique: var(--atlantique);
+  --color-sable: var(--sable);
+  --color-texte: var(--texte);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -76,6 +79,12 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground;
+  }
+  /* Les titres en Bricolage Grotesque 800, comme le veut la charte. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-extrabold;
   }
 }
