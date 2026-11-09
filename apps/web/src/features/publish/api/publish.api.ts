@@ -2,6 +2,8 @@ import {
   type PublishedTripResponse,
   type PublishTripInput,
   publishedTripSchema,
+  type TripProposalResponse,
+  tripProposalSchema,
 } from '@joj/shared';
 import { api } from '@/lib/api';
 
@@ -15,5 +17,13 @@ export const publishApi = {
       method: 'POST',
       body: input,
       schema: publishedTripSchema,
+    }),
+
+  /** L'annonce lue par l'assistant : une proposition à relire, rien n'est publié. */
+  propose: (message: string) =>
+    api.request<TripProposalResponse>('/trips/proposals', {
+      method: 'POST',
+      body: { message },
+      schema: tripProposalSchema,
     }),
 };

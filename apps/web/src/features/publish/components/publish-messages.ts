@@ -4,6 +4,10 @@ import { ApiError } from '@/lib/api';
 const MESSAGES: Record<string, string> = {
   DEPARTURE_IN_PAST: 'Ce départ est déjà passé.',
   VALIDATION_FAILED: 'Vérifie les champs du formulaire.',
+  PROPOSAL_SITE_NOT_FOUND:
+    'Je n’ai pas trouvé le site (Dakar, Diamniadio ou Saly) dans ton annonce.',
+  PROPOSAL_DEPARTURE_NOT_FOUND: 'Je n’ai pas trouvé l’heure de départ dans ton annonce.',
+  ASSISTANT_UNAVAILABLE: 'L’assistant ne répond pas, remplis le formulaire.',
 };
 
 /** Le refus des places dépend du véhicule : l'API dit lequel dans `details`. */

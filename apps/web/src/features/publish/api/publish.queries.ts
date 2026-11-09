@@ -10,3 +10,6 @@ export function usePublishTrip() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tripKeys.all }),
   });
 }
+
+/** Lire une annonce ne change aucune donnée : rien à relire dans le cache. */
+export const useProposeTrip = () => useMutation({ mutationFn: publishApi.propose });
