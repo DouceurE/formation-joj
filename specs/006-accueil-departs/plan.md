@@ -96,4 +96,4 @@ Cinq tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d
 
 Écart bloquant relevé par le second relecteur (base `50fad57^`).
 
-- [ ] T11 [006-AS2] Écrire d'abord dans `apps/web/src/features/trips/components/departures-page.test.tsx` (« 006-AS2: shows the vehicle, place, time, price and remaining seats of each departure »), des assertions sur les cinq valeurs du second départ (Ndiaga Ndiaye, Pikine, 10:00, 500 FCFA, 30 places restantes), comme pour le premier ; test de couverture, il peut passer d'emblée ; preuve : relecteur, `departures-page.test.tsx:28-29` (le lieu, le prix et les places du départ de 10 h ne sont pas vérifiés)
+- [x] T11 [006-AS2] Écrire d'abord dans `apps/web/src/features/trips/components/departures-page.test.tsx` (« 006-AS2: shows the vehicle, place, time, price and remaining seats of each departure »), des assertions sur les cinq valeurs du second départ (Ndiaga Ndiaye, Pikine, 10:00, 500 FCFA, 30 places restantes), comme pour le premier ; test de couverture, il peut passer d'emblée ; preuve : relecteur, `departures-page.test.tsx:28-29` (le lieu, le prix et les places du départ de 10 h ne sont pas vérifiés)

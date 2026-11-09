@@ -119,3 +119,18 @@ describe('DeparturesPage day field', () => {
     expect(router.state.location.search).toEqual({ site: 'diamniadio', date: '2026-11-10' });
   });
 });
+
+describe('DeparturesPage departure details', () => {
+  it('006-AS2: shows the vehicle, place, time, price and remaining seats of each departure', async () => {
+    await renderRoute({ initialEntries: ['/departs?site=diamniadio&date=2026-11-10'] });
+
+    const [first, second] = await departuresList();
+    const expected = [
+      [first, ['Voiture', 'Parcelles', '08:00', /1\s500\sFCFA/, '3 places restantes']],
+      [second, ['Ndiaga Ndiaye', 'Pikine', '10:00', /500\sFCFA/, '30 places restantes']],
+    ] as const;
+    for (const [item, values] of expected) {
+      for (const value of values) expect(item).toHaveTextContent(value);
+    }
+  });
+});
