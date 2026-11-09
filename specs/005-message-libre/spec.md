@@ -1,6 +1,6 @@
 # 005 — Publier un trajet depuis un message libre
 
-**Statut** : Validée
+**Statut** : Implémentée
 **PRD** : specs/prd-covoiturage.md, TR5
 
 ## Contexte
