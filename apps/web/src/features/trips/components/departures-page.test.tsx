@@ -7,6 +7,7 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { mockControl } from '@/mocks/control';
+import { carAt8 } from '@/mocks/fixture';
 import { renderRoute } from '@/test/utils';
 
 async function departuresList() {
@@ -33,12 +34,15 @@ describe('DeparturesPage', () => {
     expect(router.state.location.search).toEqual({ site: 'diamniadio', date: '2026-11-10' });
   });
 
-  it('006-AS2: shows a « Réserver » button on each departure, not yet active', async () => {
+  // Annoncé par la spec 006 : « Réserver » mène à l'écran de réservation de TR7.
+  it('006-AS2: shows a « Réserver » link on each departure, leading to its booking', async () => {
     await renderRoute({ initialEntries: ['/departs?site=diamniadio&date=2026-11-10'] });
 
-    for (const item of await departuresList()) {
-      expect(within(item).getByRole('button', { name: /Réserver/ })).toBeDisabled();
-    }
+    const [first] = await departuresList();
+    expect(within(first as HTMLElement).getByRole('link', { name: 'Réserver' })).toHaveAttribute(
+      'href',
+      `/reserver/${carAt8.id}?site=diamniadio&date=2026-11-10`,
+    );
   });
 
   it('006-AS3: shows the official lines below, marked as not bookable here', async () => {

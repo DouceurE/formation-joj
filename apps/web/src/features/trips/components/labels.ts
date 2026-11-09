@@ -32,8 +32,9 @@ export function priceLabel(priceFcfa: number): string {
   return priceFcfa === 0 ? 'Gratuit' : `${priceFcfa.toLocaleString('fr-FR')} FCFA`;
 }
 
+/** « 0 place restante », « 1 place restante », « 30 places restantes » : le singulier jusqu'à 1. */
 export function remainingSeatsLabel(remaining: number): string {
-  return remaining === 1 ? '1 place restante' : `${remaining} places restantes`;
+  return remaining <= 1 ? `${remaining} place restante` : `${remaining} places restantes`;
 }
 
 /** Aujourd'hui, à Dakar : la date proposée quand l'adresse n'en donne pas. */

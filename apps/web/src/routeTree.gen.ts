@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DepartsRouteImport } from './routes/departs'
+import { Route as ReserverTripIdRouteImport } from './routes/reserver.$tripId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const DepartsRoute = DepartsRouteImport.update({
   path: '/departs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReserverTripIdRoute = ReserverTripIdRouteImport.update({
+  id: '/reserver/$tripId',
+  path: '/reserver/$tripId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
+  '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
+  '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/departs': typeof DepartsRoute
+  '/reserver/$tripId': typeof ReserverTripIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/departs'
+  fullPaths: '/' | '/departs' | '/reserver/$tripId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/departs'
-  id: '__root__' | '/' | '/departs'
+  to: '/' | '/departs' | '/reserver/$tripId'
+  id: '__root__' | '/' | '/departs' | '/reserver/$tripId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DepartsRoute: typeof DepartsRoute
+  ReserverTripIdRoute: typeof ReserverTripIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DepartsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reserver/$tripId': {
+      id: '/reserver/$tripId'
+      path: '/reserver/$tripId'
+      fullPath: '/reserver/$tripId'
+      preLoaderRoute: typeof ReserverTripIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DepartsRoute: DepartsRoute,
+  ReserverTripIdRoute: ReserverTripIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

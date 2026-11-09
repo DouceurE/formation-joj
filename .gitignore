@@ -9,3 +9,6 @@ apps/api/.data/
 .vite/
 .DS_Store
 .claude/settings.local.json
+
+# Fichiers temporaires du plugin TanStack Router, créés au build.
+.tanstack/

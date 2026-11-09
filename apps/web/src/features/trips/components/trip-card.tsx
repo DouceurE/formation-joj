@@ -1,6 +1,8 @@
 import type { TripResponse } from '@joj/shared';
+import { Link } from '@tanstack/react-router';
 import { Clock, MapPin, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { departureTime, priceLabel, remainingSeatsLabel, VEHICLE_LABELS } from './labels';
 
 /** Un départ en covoiturage : ce qu'il faut savoir pour choisir, et « Réserver » (TR7). */
@@ -26,13 +28,15 @@ export function TripCard({ trip }: { trip: TripResponse }) {
         <Users aria-hidden="true" className="size-4 text-baobab" />
         {remainingSeatsLabel(trip.remainingSeats)}
       </p>
-      {/* La réservation arrive avec TR7 : le bouton est visible, pas encore actif. */}
-      <Button disabled className="min-h-11 self-start" aria-describedby={`soon-${trip.id}`}>
+      {/* Le site et le jour suivent dans l'adresse : l'écran de réservation relit ce départ. */}
+      <Link
+        to="/reserver/$tripId"
+        params={{ tripId: trip.id }}
+        search={{ site: trip.site, date: trip.departureAt.slice(0, 10) }}
+        className={cn(buttonVariants(), 'min-h-11 self-start')}
+      >
         Réserver
-      </Button>
-      <p id={`soon-${trip.id}`} className="text-sm">
-        Bientôt : la réservation arrive.
-      </p>
+      </Link>
     </li>
   );
 }
