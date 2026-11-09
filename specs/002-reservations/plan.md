@@ -95,7 +95,7 @@ AS5 n'a pas de test e2e : l'API refuse de publier un départ passé, et ne lit q
 
 Cinq tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d'abord et cite les scénarios qu'elle couvre ; elle tient dans un commit.
 
-- [ ] T01 [002-AS7] Écrire d'abord dans `packages/shared/src/trips.spec.ts` (« 002-AS7: rejects a booking without a phone »), puis `bookSeatSchema`, `tripIdParamsSchema`, `bookingConfirmationSchema` et les constantes dans `packages/shared/src/trips.ts`
+- [x] T01 [002-AS7] Écrire d'abord dans `packages/shared/src/trips.spec.ts` (« 002-AS7: rejects a booking without a phone »), puis `bookSeatSchema`, `tripIdParamsSchema`, `bookingConfirmationSchema` et les constantes dans `packages/shared/src/trips.ts`
 - [ ] T02 [002-AS1, AS2, AS4, AS5, AS7] Écrire d'abord `domain/booking.spec.ts` et les tests de `trip.book()` dans `domain/trip.spec.ts` (« 002-AS2: refuses a booking on a full taxi », « 002-AS5: refuses a booking on a departed trip »), puis `booking.ts`, `phone.ts`, `trip.book()` et les nouveaux codes de `trips.errors.ts`
 - [ ] T03 [002-AS1, AS4, AS5, AS6] Écrire d'abord dans `application/trips.application.spec.ts` (« 002-AS1: books a seat and returns the driver phone », « 002-AS6: refuses a booking on an unknown trip »), puis `findById()` et `addBooking()` dans le port et le repository en mémoire, `generateBookingCode()` et `BookSeat`
 - [ ] T04 [002-AS1, AS3, AS4] Écrire d'abord dans `infra/drizzle-trip.repository.int.spec.ts` (« 002-AS3: accepts only one of two simultaneous bookings on the last seat »), puis la table `bookings`, la migration `pnpm db:generate --name=bookings`, les mappers et les méthodes de `DrizzleTripRepository`

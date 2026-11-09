@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { listTripsQuerySchema, publishTripSchema } from './trips.ts';
+import {
+  bookSeatSchema,
+  listTripsQuerySchema,
+  publishTripSchema,
+  tripIdParamsSchema,
+} from './trips.ts';
 
 const trip = {
   vehicle: 'ndiaga-ndiaye',
@@ -66,5 +71,36 @@ describe('listTripsQuerySchema', () => {
   it('001-AS4: rejects an unknown site in the list', () => {
     const result = listTripsQuerySchema.safeParse({ site: 'thies', date: '2026-11-10' });
     expect(result.error?.issues[0]?.path).toEqual(['site']);
+  });
+});
+
+describe('bookSeatSchema', () => {
+  const booking = { passengerName: 'Moussa', passengerPhone: '78 555 66 77' };
+  const pathOf = (input: unknown) => bookSeatSchema.safeParse(input).error?.issues[0]?.path;
+
+  it('002-AS1: accepts a passenger name and phone, trimmed', () => {
+    expect(
+      bookSeatSchema.parse({ passengerName: ' Moussa ', passengerPhone: ' 78 555 66 77 ' }),
+    ).toEqual(booking);
+  });
+
+  it('002-AS7: rejects a booking without a phone', () => {
+    expect(pathOf({ passengerName: 'Moussa' })).toEqual(['passengerPhone']);
+  });
+
+  it('002-AS7: rejects a booking without a name', () => {
+    expect(pathOf({ passengerPhone: '78 555 66 77' })).toEqual(['passengerName']);
+  });
+
+  it.each(['passengerName', 'passengerPhone'])('002-AS7: rejects a blank %s', (field) => {
+    expect(pathOf({ ...booking, [field]: '   ' })).toEqual([field]);
+  });
+});
+
+describe('tripIdParamsSchema', () => {
+  it('002-AS6: accepts a uuid and rejects anything else', () => {
+    const id = '0199f5c2-0000-7000-8000-000000000101';
+    expect(tripIdParamsSchema.parse({ id })).toEqual({ id });
+    expect(tripIdParamsSchema.safeParse({ id: 'abc' }).success).toBe(false);
   });
 });

@@ -62,3 +62,29 @@ export const publishedTripSchema = tripSchema.extend({
   managementCode: z.string().length(TRIP_MANAGEMENT_CODE_LENGTH),
 });
 export type PublishedTripResponse = z.infer<typeof publishedTripSchema>;
+
+export const TRIP_NAME_MAX_LENGTH = 100;
+export const BOOKING_CODE_LENGTH = 8;
+
+/** Corps de `POST /api/trips/:id/bookings`. Le téléphone identifie le supporter. */
+export const bookSeatSchema = z.object({
+  passengerName: z.string().trim().min(1).max(TRIP_NAME_MAX_LENGTH),
+  passengerPhone: z.string().trim().min(1).max(TRIP_PHONE_MAX_LENGTH),
+});
+export type BookSeatInput = z.infer<typeof bookSeatSchema>;
+
+/** Paramètre `:id` des routes d'un trajet. */
+export const tripIdParamsSchema = z.object({ id: z.uuid() });
+
+/** La confirmation d'une réservation : son code, où et quand partir, et qui appeler. */
+export const bookingConfirmationSchema = z.object({
+  id: z.uuid(),
+  bookingCode: z.string().length(BOOKING_CODE_LENGTH),
+  tripId: z.uuid(),
+  passengerName: z.string(),
+  departurePlace: z.string(),
+  departureAt: z.iso.datetime(),
+  driverPhone: z.string(),
+  createdAt: z.iso.datetime(),
+});
+export type BookingConfirmationResponse = z.infer<typeof bookingConfirmationSchema>;
