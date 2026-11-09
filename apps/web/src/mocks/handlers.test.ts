@@ -2,9 +2,21 @@
  * La fausse API tient le même contrat que apps/api : si elle s'en écarte, les tests du front
  * passent contre une API qui n'existe pas. Ces tests l'appellent avec `fetch`, sans React.
  */
-import { officialLineListSchema, tripListSchema } from '@joj/shared';
+import {
+  bookingConfirmationSchema,
+  bookingViewSchema,
+  officialLineListSchema,
+  tripListSchema,
+} from '@joj/shared';
 import { describe, expect, it } from 'vitest';
-import { carAt8, ndiagaAt10 } from './fixture';
+import {
+  BOOKING_ON_CANCELLED_TRIP,
+  carAt8,
+  departedCar,
+  DRIVER_PHONES,
+  fullTaxi,
+  ndiagaAt10,
+} from './fixture';
 
 const call = (path: string) => fetch(`http://localhost${path}`);
 
@@ -44,5 +56,93 @@ describe('mock official lines API', () => {
 
   it('006-AS3: serves no official line for Dakar', async () => {
     expect(await (await call('/api/official-lines?site=dakar')).json()).toEqual([]);
+  });
+});
+
+const post = (path: string, body: unknown) =>
+  fetch(`http://localhost${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+const moussa = { passengerName: 'Moussa', passengerPhone: '78 555 66 77' };
+
+describe('mock bookings API', () => {
+  it('007-AS2: books a seat, returns the confirmation and lowers the remaining seats', async () => {
+    const response = await post(`/api/trips/${carAt8.id}/bookings`, moussa);
+
+    expect(response.status).toBe(201);
+    expect(bookingConfirmationSchema.parse(await response.json())).toMatchObject({
+      tripId: carAt8.id,
+      passengerName: 'Moussa',
+      departurePlace: 'Parcelles',
+      departureAt: carAt8.departureAt,
+      driverPhone: DRIVER_PHONES[carAt8.id],
+    });
+    const trips = await (await call('/api/trips?site=diamniadio&date=2026-11-10')).json();
+    expect(trips[0].remainingSeats).toBe(carAt8.remainingSeats - 1);
+  });
+
+  it('007-AS4: refuses a booking on a full trip like the API (409, TRIP_FULL)', async () => {
+    const response = await post(`/api/trips/${fullTaxi.id}/bookings`, moussa);
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'TRIP_FULL' });
+  });
+
+  it('007-AS4: refuses the same phone twice on a trip, spaces aside (409, TRIP_ALREADY_BOOKED)', async () => {
+    await post(`/api/trips/${carAt8.id}/bookings`, moussa);
+    const response = await post(`/api/trips/${carAt8.id}/bookings`, {
+      ...moussa,
+      passengerPhone: '785556677',
+    });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'TRIP_ALREADY_BOOKED' });
+  });
+
+  it('007-AS4: refuses a booking on a departed trip (422, TRIP_ALREADY_DEPARTED)', async () => {
+    const response = await post(`/api/trips/${departedCar.id}/bookings`, moussa);
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ code: 'TRIP_ALREADY_DEPARTED' });
+  });
+
+  it('007-AS4: refuses a booking without a phone (400, VALIDATION_FAILED)', async () => {
+    const response = await post(`/api/trips/${carAt8.id}/bookings`, { passengerName: 'Moussa' });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      errors: [expect.objectContaining({ path: 'passengerPhone' })],
+    });
+  });
+
+  it('007-AS5: finds a booking by its code, and refuses an unknown code (404)', async () => {
+    const booked = await (await post(`/api/trips/${carAt8.id}/bookings`, moussa)).json();
+
+    const found = await call(`/api/bookings/${booked.bookingCode}`);
+    expect(found.status).toBe(200);
+    expect(bookingViewSchema.parse(await found.json())).toMatchObject({ status: 'confirmee' });
+
+    const unknown = await call('/api/bookings/ZZZZ9999');
+    expect(unknown.status).toBe(404);
+    expect(await unknown.json()).toMatchObject({ code: 'BOOKING_NOT_FOUND' });
+  });
+
+  it('007-AS6: cancels a booking, gives the seat back, and refuses a second cancellation', async () => {
+    const booked = await (await post(`/api/trips/${carAt8.id}/bookings`, moussa)).json();
+
+    const cancelled = await post('/api/bookings/cancel', { bookingCode: booked.bookingCode });
+    expect(cancelled.status).toBe(200);
+    expect(await cancelled.json()).toMatchObject({ status: 'annulee' });
+    const trips = await (await call('/api/trips?site=diamniadio&date=2026-11-10')).json();
+    expect(trips[0].remainingSeats).toBe(carAt8.remainingSeats);
+
+    const again = await post('/api/bookings/cancel', { bookingCode: booked.bookingCode });
+    expect(again.status).toBe(409);
+    expect(await again.json()).toMatchObject({ code: 'BOOKING_ALREADY_CANCELLED' });
+  });
+
+  it('007-AS6: shows « trajet annulé » for a booking on a trip cancelled by its driver', async () => {
+    const response = await call(`/api/bookings/${BOOKING_ON_CANCELLED_TRIP}`);
+    expect(await response.json()).toMatchObject({ status: 'trajet-annule' });
   });
 });
