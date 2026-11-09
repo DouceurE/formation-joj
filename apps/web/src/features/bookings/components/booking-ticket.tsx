@@ -24,11 +24,16 @@ function whatsAppLink(booking: BookingConfirmationResponse): string {
  */
 export function BookingTicket({ booking }: { booking: BookingConfirmationResponse }) {
   const [turned, setTurned] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
 
+  /** Le presse-papiers peut refuser (permission, page non sécurisée) : on le dit, le code reste lisible. */
   async function copyCode() {
-    await navigator.clipboard.writeText(booking.bookingCode);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(booking.bookingCode);
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('failed');
+    }
   }
 
   return (
@@ -102,8 +107,15 @@ export function BookingTicket({ booking }: { booking: BookingConfirmationRespons
             <MessageCircle aria-hidden="true" />
             Envoyer sur WhatsApp
           </a>
-          <p role="status" className="self-center font-semibold">
-            {copied ? 'Code copié' : ''}
+          <p
+            role="status"
+            className={cn(
+              'self-center font-semibold',
+              copyStatus === 'failed' && 'text-laterite-fonce',
+            )}
+          >
+            {copyStatus === 'copied' && 'Code copié'}
+            {copyStatus === 'failed' && 'Copie impossible : note le code ci-dessus.'}
           </p>
         </div>
       )}

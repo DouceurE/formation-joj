@@ -4,7 +4,7 @@
  */
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { carAt8, DRIVER_PHONES } from '@/mocks/fixture';
 import { renderRoute } from '@/test/utils';
 import { savedBookings } from '../storage/saved-bookings';
@@ -74,5 +74,21 @@ describe('BookingTicket', () => {
     expect(message).toContain(code);
     expect(message).toContain('Parcelles');
     expect(message).toContain('08:00');
+  });
+});
+
+describe('BookingTicket when the clipboard refuses', () => {
+  it('007-AS3: says the code could not be copied when the clipboard refuses', async () => {
+    const user = await bookCarAt8();
+    await user.click(await screen.findByRole('button', { name: /Retourner le billet/ }));
+    // Le presse-papiers refuse : page hors contexte sécurisé, ou permission refusée.
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('NotAllowedError'));
+
+    await user.click(screen.getByRole('button', { name: 'Copier le code' }));
+
+    expect(
+      await screen.findByText('Copie impossible : note le code ci-dessus.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Code copié')).not.toBeInTheDocument();
   });
 });
