@@ -82,6 +82,19 @@ describe('trips (application layer)', () => {
     expect(listed.map((trip) => trip.id)).toEqual([at8.id, at10.id]);
   });
 
+  it('001-AS5: lists a trip that has already departed first', async () => {
+    const { trips, listTrips } = setup();
+    // Une journée écoulée : le trajet de 8 h est passé par rapport à l'heure réelle.
+    const departed = stored('diamniadio', '2025-11-10T08:00:00.000Z');
+    const later = stored('diamniadio', '2025-11-10T18:00:00.000Z');
+    expect(departed.departureAt.getTime()).toBeLessThan(Date.now());
+    await trips.insert(later);
+    await trips.insert(departed);
+
+    const listed = await listTrips.execute({ site: 'diamniadio', date: '2025-11-10' });
+    expect(listed.map((trip) => trip.id)).toEqual([departed.id, later.id]);
+  });
+
   it('001-AS6: returns an empty list for a day without departure', async () => {
     const { listTrips } = setup();
     expect(await listTrips.execute({ site: 'saly', date: '2026-11-12' })).toEqual([]);

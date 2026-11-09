@@ -64,6 +64,22 @@ describe('DrizzleTripRepository (in-memory PGlite, migrations applied)', () => {
     expect(listed.map((trip) => trip.id)).toEqual([midnight.id, at8.id, at10.id]);
   });
 
+  it('001-AS5: lists a trip that has already departed first', async () => {
+    // Une journée écoulée : le trajet de 8 h est passé par rapport à l'heure réelle.
+    const departed = storedTrip('saly', '2025-11-10T08:00:00.000Z');
+    const later = storedTrip('saly', '2025-11-10T18:00:00.000Z');
+    expect(departed.departureAt.getTime()).toBeLessThan(Date.now());
+    await repository.insert(later);
+    await repository.insert(departed);
+
+    const listed = await repository.listBySiteBetween(
+      'saly',
+      new Date('2025-11-10T00:00:00.000Z'),
+      new Date('2025-11-11T00:00:00.000Z'),
+    );
+    expect(listed.map((trip) => trip.id)).toEqual([departed.id, later.id]);
+  });
+
   it('001-AS6: returns an empty list when the site has no trip that day', async () => {
     expect(
       await repository.listBySiteBetween(
