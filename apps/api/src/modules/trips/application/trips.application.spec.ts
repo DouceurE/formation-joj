@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { Trip, type TripProps } from '../domain/trip';
 import { InMemoryTripRepository } from './testing/in-memory-trip.repository';
 import { BookSeat } from './use-cases/book-seat';
+import { CancelBooking } from './use-cases/cancel-booking';
+import { CancelTrip } from './use-cases/cancel-trip';
+import { GetBooking } from './use-cases/get-booking';
 import { ListTrips } from './use-cases/list-trips';
 import { PublishTrip } from './use-cases/publish-trip';
 
@@ -24,6 +27,9 @@ function setup() {
     publishTrip: new PublishTrip(trips),
     listTrips: new ListTrips(trips),
     bookSeat: new BookSeat(trips),
+    cancelBooking: new CancelBooking(trips),
+    cancelTrip: new CancelTrip(trips),
+    getBooking: new GetBooking(trips),
   };
 }
 
@@ -163,5 +169,59 @@ describe('booking a seat (application layer)', () => {
       bookSeat.execute('0199f5c2-0000-7000-8000-00000000dead', moussa),
     ).rejects.toMatchObject({ code: 'TRIP_NOT_FOUND' });
     expect(trips.bookings).toEqual([]);
+  });
+});
+
+describe('cancelling (application layer)', () => {
+  const moussa = { passengerName: 'Moussa', passengerPhone: '78 555 66 77' };
+
+  it('003-AS1: cancels a booking and frees its seat', async () => {
+    const { publishTrip, bookSeat, cancelBooking, listTrips } = setup();
+    const trip = await publishTrip.execute(ndiaga);
+    const { booking } = await bookSeat.execute(trip.id, moussa);
+
+    const cancelled = await cancelBooking.execute({ bookingCode: booking.bookingCode });
+
+    expect(cancelled.status).toBe('annulee');
+    expect(cancelled.booking.cancelledAt).toBeInstanceOf(Date);
+    const [listed] = await listTrips.execute({ site: 'diamniadio', date: FUTURE_DAY });
+    expect(listed?.remainingSeats).toBe(38);
+  });
+
+  it('003-AS2: refuses an unknown code', async () => {
+    const { cancelBooking, getBooking, cancelTrip, trips } = setup();
+    await expect(cancelBooking.execute({ bookingCode: 'ZZZZ9999' })).rejects.toMatchObject({
+      code: 'BOOKING_NOT_FOUND',
+    });
+    await expect(getBooking.execute('ZZZZ9999')).rejects.toMatchObject({
+      code: 'BOOKING_NOT_FOUND',
+    });
+    await expect(cancelTrip.execute({ managementCode: 'ZZZZ9999' })).rejects.toMatchObject({
+      code: 'TRIP_NOT_FOUND',
+    });
+    expect(trips.bookings).toEqual([]);
+  });
+
+  it('003-AS4: cancels a trip, which leaves the list of departures', async () => {
+    const { publishTrip, cancelTrip, listTrips } = setup();
+    const trip = await publishTrip.execute(ndiaga);
+
+    const cancelled = await cancelTrip.execute({ managementCode: trip.managementCode });
+
+    expect(cancelled.cancelledAt).toBeInstanceOf(Date);
+    expect(await listTrips.execute({ site: 'diamniadio', date: FUTURE_DAY })).toEqual([]);
+  });
+
+  it('003-AS6: shows a confirmed booking, then a cancelled trip', async () => {
+    const { publishTrip, bookSeat, cancelTrip, getBooking } = setup();
+    const trip = await publishTrip.execute(ndiaga);
+    const { booking } = await bookSeat.execute(trip.id, moussa);
+
+    const before = await getBooking.execute(booking.bookingCode);
+    expect(before.status).toBe('confirmee');
+    expect(before.trip).toMatchObject({ departurePlace: 'Pikine', driverPhone: '77 123 45 67' });
+
+    await cancelTrip.execute({ managementCode: trip.managementCode });
+    expect((await getBooking.execute(booking.bookingCode)).status).toBe('trajet-annule');
   });
 });

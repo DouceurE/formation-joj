@@ -4,7 +4,7 @@ import { and, asc, count, eq, gte, inArray, lt } from 'drizzle-orm';
 import type { Database } from '../../../core/database/database';
 import { DATABASE } from '../../../core/database/database.module';
 import { isUniqueViolation } from '../../../core/database/pg-errors';
-import { TripRepository } from '../application/trip.repository';
+import { type BookingWithTrip, TripRepository } from '../application/trip.repository';
 import type { Booking } from '../domain/booking';
 import type { Trip } from '../domain/trip';
 import { tripAlreadyBooked, tripFull, tripNotFound } from '../domain/trips.errors';
@@ -22,6 +22,22 @@ export class DrizzleTripRepository extends TripRepository {
     const [row] = await this.db.select().from(trips).where(eq(trips.id, id)).limit(1);
     if (!row) return null;
     return toDomain(row, (await this.phonesByTrip([id])).get(id) ?? []);
+  }
+
+  async findByManagementCode(_code: string): Promise<Trip | null> {
+    throw new Error('non implémenté');
+  }
+
+  async findBookingByCode(_code: string): Promise<BookingWithTrip | null> {
+    throw new Error('non implémenté');
+  }
+
+  async saveTripCancellation(_trip: Trip): Promise<void> {
+    throw new Error('non implémenté');
+  }
+
+  async saveBookingCancellation(_booking: Booking): Promise<void> {
+    throw new Error('non implémenté');
   }
 
   async insert(trip: Trip): Promise<void> {
