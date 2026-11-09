@@ -19,7 +19,7 @@ export function RouteDrawing({
 }) {
   const VehicleIcon = VEHICLE_ICONS[vehicle];
   return (
-    <figure role="img" aria-label={`Trajet de ${from} à ${to}`} className="flex flex-col gap-2">
+    <div role="img" aria-label={`Trajet de ${from} à ${to}`} className="flex flex-col gap-2">
       <div className="relative h-16">
         <svg viewBox="0 0 300 40" className="absolute inset-0 h-full w-full" aria-hidden="true">
           <path
@@ -39,10 +39,10 @@ export function RouteDrawing({
           className="absolute top-3 left-1/2 size-8 -translate-x-1/2 rounded-full bg-soleil p-1 text-texte motion-safe:animate-[dem-drive_1.6s_ease-in-out_both]"
         />
       </div>
-      <figcaption className="flex justify-between font-semibold" aria-hidden="true">
+      <div className="flex justify-between font-semibold" aria-hidden="true">
         <span>{from}</span>
         <span>{to}</span>
-      </figcaption>
-    </figure>
+      </div>
+    </div>
   );
 }
