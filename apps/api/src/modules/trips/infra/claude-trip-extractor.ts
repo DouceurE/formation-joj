@@ -51,10 +51,10 @@ export class ClaudeTripExtractor extends TripExtractor {
         system: SYSTEM,
         messages: [{ role: 'user', content: userContent(message, now) }],
       });
-    } catch (error) {
-      // Panne réseau, clé absente, limite atteinte : le conducteur garde le formulaire de TR1.
-      if (error instanceof Anthropic.AnthropicError) throw assistantUnavailable();
-      throw error;
+    } catch {
+      // Panne réseau, limite atteinte, ou clé absente (le SDK lève alors une simple Error, pas une
+      // AnthropicError) : quelle que soit la cause, le conducteur garde le formulaire de TR1.
+      throw assistantUnavailable();
     }
     if (response.stop_reason === 'refusal' || !response.parsed_output) {
       throw assistantUnavailable();

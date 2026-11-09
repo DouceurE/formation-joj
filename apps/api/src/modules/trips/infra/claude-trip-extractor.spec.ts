@@ -74,3 +74,17 @@ describe('ClaudeTripExtractor', () => {
     );
   });
 });
+
+describe('ClaudeTripExtractor without an API key', () => {
+  it('005-AS6: turns a missing API key into ASSISTANT_UNAVAILABLE', async () => {
+    // Ce que lève le SDK 1.6.0 sans clé : une simple Error, pas une AnthropicError.
+    const { client } = stubClient(() => {
+      throw new Error(
+        'Could not resolve authentication method. Expected either apiKey or authToken to be set.',
+      );
+    });
+    await expect(new ClaudeTripExtractor(client).extract(MESSAGE, NOW)).rejects.toThrow(
+      unavailable,
+    );
+  });
+});
