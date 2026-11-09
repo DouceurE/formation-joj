@@ -1,9 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   type BookingConfirmationResponse,
   bookingConfirmationSchema,
   bookSeatSchema,
+  type CancelledTripResponse,
+  cancelledTripSchema,
+  cancelTripSchema,
   listTripsQuerySchema,
   type PublishedTripResponse,
   publishedTripSchema,
@@ -14,6 +17,7 @@ import {
 } from '@joj/shared';
 import { createZodDto, ZodSerializerDto } from 'nestjs-zod';
 import { type BookingConfirmation, BookSeat } from '../application/use-cases/book-seat';
+import { CancelTrip } from '../application/use-cases/cancel-trip';
 import { ListTrips } from '../application/use-cases/list-trips';
 import { PublishTrip } from '../application/use-cases/publish-trip';
 import type { Trip } from '../domain/trip';
@@ -25,6 +29,8 @@ class PublishedTripDto extends createZodDto(publishedTripSchema) {}
 class TripIdParamsDto extends createZodDto(tripIdParamsSchema) {}
 class BookSeatDto extends createZodDto(bookSeatSchema) {}
 class BookingConfirmationDto extends createZodDto(bookingConfirmationSchema) {}
+class CancelTripDto extends createZodDto(cancelTripSchema) {}
+class CancelledTripDto extends createZodDto(cancelledTripSchema) {}
 
 /** Couche fine : valider (DTO zod), appeler un cas d'usage, sérialiser. Aucune règle métier ici. */
 @ApiTags('trips')
@@ -34,6 +40,7 @@ export class TripsController {
     private readonly publishTrip: PublishTrip,
     private readonly listTrips: ListTrips,
     private readonly bookSeat: BookSeat,
+    private readonly cancelTrip: CancelTrip,
   ) {}
 
   @Post()
@@ -48,6 +55,14 @@ export class TripsController {
   @ZodSerializerDto([TripDto])
   async list(@Query() query: ListTripsQueryDto): Promise<TripResponse[]> {
     return (await this.listTrips.execute(query)).map(toResponse);
+  }
+
+  @Post('cancel')
+  @HttpCode(200)
+  @ZodSerializerDto(CancelledTripDto)
+  async cancel(@Body() body: CancelTripDto): Promise<CancelledTripResponse> {
+    const { trip, cancelledAt } = await this.cancelTrip.execute(body);
+    return { id: trip.id, cancelledAt: cancelledAt.toISOString() };
   }
 
   @Post(':id/bookings')

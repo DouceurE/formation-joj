@@ -1,5 +1,11 @@
 import type { INestApplication } from '@nestjs/common';
-import { bookingConfirmationSchema, publishedTripSchema, tripListSchema } from '@joj/shared';
+import {
+  bookingConfirmationSchema,
+  bookingViewSchema,
+  cancelledTripSchema,
+  publishedTripSchema,
+  tripListSchema,
+} from '@joj/shared';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp } from './create-test-app';
@@ -228,5 +234,124 @@ describe('/api/trips/:id/bookings (e2e)', () => {
     expect(response.body).toMatchObject({ status: 400, code: 'VALIDATION_FAILED' });
     expect(response.body.errors).toEqual([expect.objectContaining({ path: 'passengerPhone' })]);
     expect(await remainingSeats('2031-01-04')).toBe(38);
+  });
+});
+
+describe('cancellations (e2e)', () => {
+  let app: INestApplication;
+  const api = () => request(app.getHttpServer());
+  const moussa = { passengerName: 'Moussa', passengerPhone: '78 555 66 77' };
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(() => app?.close());
+
+  /** Publie un trajet vers Diamniadio un jour propre au test, et y réserve la place de Moussa. */
+  async function bookedTrip(day: string) {
+    const published = await api()
+      .post('/api/trips')
+      .send({ ...ndiaga, departureAt: `${day}T08:00:00.000Z` })
+      .expect(201);
+    const booked = await api()
+      .post(`/api/trips/${published.body.id}/bookings`)
+      .send(moussa)
+      .expect(201);
+    return {
+      tripId: published.body.id as string,
+      managementCode: published.body.managementCode as string,
+      bookingCode: booked.body.bookingCode as string,
+    };
+  }
+
+  async function listed(day: string) {
+    const response = await api().get(`/api/trips?site=diamniadio&date=${day}`).expect(200);
+    return tripListSchema.parse(response.body);
+  }
+
+  it('003-AS1: cancels a booking (200) and frees its seat', async () => {
+    const { bookingCode } = await bookedTrip('2031-02-01');
+
+    const response = await api().post('/api/bookings/cancel').send({ bookingCode }).expect(200);
+
+    expect(bookingViewSchema.parse(response.body)).toMatchObject({
+      bookingCode,
+      status: 'annulee',
+    });
+    expect((await listed('2031-02-01'))[0]?.remainingSeats).toBe(38);
+  });
+
+  it('003-AS2: answers 404 to an unknown code on the three routes', async () => {
+    const cancelBooking = await api()
+      .post('/api/bookings/cancel')
+      .send({ bookingCode: 'ZZZZ9999' })
+      .expect(404);
+    expect(cancelBooking.body).toMatchObject({ status: 404, code: 'BOOKING_NOT_FOUND' });
+
+    const getBooking = await api().get('/api/bookings/ZZZZ9999').expect(404);
+    expect(getBooking.body).toMatchObject({ status: 404, code: 'BOOKING_NOT_FOUND' });
+
+    const cancelTrip = await api()
+      .post('/api/trips/cancel')
+      .send({ managementCode: 'ZZZZ9999' })
+      .expect(404);
+    expect(cancelTrip.body).toMatchObject({ status: 404, code: 'TRIP_NOT_FOUND' });
+  });
+
+  it('003-AS3: rejects a second cancellation of a booking (409, BOOKING_ALREADY_CANCELLED)', async () => {
+    const { bookingCode } = await bookedTrip('2031-02-02');
+    await api().post('/api/bookings/cancel').send({ bookingCode }).expect(200);
+
+    const response = await api().post('/api/bookings/cancel').send({ bookingCode }).expect(409);
+
+    expect(response.body).toMatchObject({ status: 409, code: 'BOOKING_ALREADY_CANCELLED' });
+    expect((await listed('2031-02-02'))[0]?.remainingSeats).toBe(38);
+  });
+
+  it('003-AS4: cancels a trip (200), which leaves the list of departures', async () => {
+    const { tripId, managementCode } = await bookedTrip('2031-02-03');
+
+    const response = await api().post('/api/trips/cancel').send({ managementCode }).expect(200);
+
+    expect(cancelledTripSchema.parse(response.body).id).toBe(tripId);
+    expect(await listed('2031-02-03')).toEqual([]);
+  });
+
+  it('003-AS5: rejects a second cancellation of a trip (409, TRIP_ALREADY_CANCELLED)', async () => {
+    const { managementCode } = await bookedTrip('2031-02-04');
+    await api().post('/api/trips/cancel').send({ managementCode }).expect(200);
+
+    const response = await api().post('/api/trips/cancel').send({ managementCode }).expect(409);
+
+    expect(response.body).toMatchObject({ status: 409, code: 'TRIP_ALREADY_CANCELLED' });
+  });
+
+  it('003-AS6: shows a confirmed booking, then a cancelled trip', async () => {
+    const { bookingCode, managementCode } = await bookedTrip('2031-02-05');
+
+    const before = await api().get(`/api/bookings/${bookingCode}`).expect(200);
+    expect(bookingViewSchema.parse(before.body)).toMatchObject({
+      status: 'confirmee',
+      departurePlace: 'Pikine',
+      departureAt: '2031-02-05T08:00:00.000Z',
+      driverPhone: '77 123 45 67',
+    });
+
+    await api().post('/api/trips/cancel').send({ managementCode }).expect(200);
+    const after = await api().get(`/api/bookings/${bookingCode}`).expect(200);
+    expect(after.body.status).toBe('trajet-annule');
+  });
+
+  it('003-AS7: rejects a booking on a cancelled trip (422, TRIP_CANCELLED)', async () => {
+    const { tripId, managementCode } = await bookedTrip('2031-02-06');
+    await api().post('/api/trips/cancel').send({ managementCode }).expect(200);
+
+    const response = await api()
+      .post(`/api/trips/${tripId}/bookings`)
+      .send({ passengerName: 'Awa', passengerPhone: '70 222 22 22' })
+      .expect(422);
+
+    expect(response.body).toMatchObject({ status: 422, code: 'TRIP_CANCELLED' });
   });
 });
