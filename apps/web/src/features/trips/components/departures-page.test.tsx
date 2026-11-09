@@ -3,7 +3,7 @@
  * du site et du jour, les covoiturages triés par heure, les lignes officielles en alternative,
  * le jour sans départ et la panne de chargement.
  */
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { mockControl } from '@/mocks/control';
@@ -102,5 +102,20 @@ describe('DeparturesPage colours of the charter', () => {
     expect(alert).toHaveClass('border-laterite');
     // Le rouge latérite clair ne passe pas AA en texte : le message est en latérite foncé.
     expect(alert).toHaveClass('text-laterite-fonce');
+  });
+});
+
+describe('DeparturesPage day field', () => {
+  it('006-AS2: changing the day in the date field updates the departures', async () => {
+    const { router } = await renderRoute({
+      initialEntries: ['/departs?site=diamniadio&date=2026-11-12'],
+    });
+    expect(await screen.findByText('Aucun départ ce jour-là')).toBeInTheDocument();
+
+    // jsdom ne sait pas taper dans un champ date : on lui donne la valeur choisie, comme le sélecteur.
+    fireEvent.change(screen.getByLabelText('Jour'), { target: { value: '2026-11-10' } });
+
+    expect(await departuresList()).toHaveLength(2);
+    expect(router.state.location.search).toEqual({ site: 'diamniadio', date: '2026-11-10' });
   });
 });
