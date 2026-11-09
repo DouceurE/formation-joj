@@ -162,3 +162,99 @@ describe('DrizzleTripRepository bookings (in-memory PGlite, migrations applied)'
     expect((await repository.findById(trip.id))?.remainingSeats).toBe(37);
   });
 });
+
+describe('DrizzleTripRepository cancellations (in-memory PGlite, migrations applied)', () => {
+  let connection: DatabaseConnection;
+  let repository: DrizzleTripRepository;
+  const LATER = new Date('2026-11-09T18:00:00.000Z');
+  const DAY = {
+    from: new Date('2026-12-20T00:00:00.000Z'),
+    to: new Date('2026-12-21T00:00:00.000Z'),
+  };
+
+  beforeAll(async () => {
+    connection = openDatabase({ pgliteDataDir: 'memory://' });
+    await connection.migrate();
+    repository = new DrizzleTripRepository(connection.db);
+  });
+
+  afterAll(() => connection?.close());
+
+  let count = 0;
+  const booking = (tripId: string, passengerPhone: string) => {
+    count += 1;
+    return Booking.create({
+      id: randomUUID(),
+      bookingCode: `CANC${String(count).padStart(4, '0')}`,
+      tripId,
+      passengerName: 'Supporter',
+      passengerPhone,
+      now: new Date('2026-11-09T09:00:00.000Z'),
+    });
+  };
+
+  async function tripWithBooking(site: TripSite) {
+    const trip = storedTrip(site, '2026-12-20T08:00:00.000Z');
+    await repository.insert(trip);
+    const seat = booking(trip.id, '78 555 66 77');
+    await repository.addBooking(seat);
+    return { trip, seat };
+  }
+
+  it('003-AS1: frees the seat of a cancelled booking, which the same phone can take again', async () => {
+    const { trip, seat } = await tripWithBooking('dakar');
+    seat.cancel(LATER);
+    await repository.saveBookingCancellation(seat);
+
+    expect((await repository.findById(trip.id))?.remainingSeats).toBe(38);
+    const found = await repository.findBookingByCode(seat.bookingCode);
+    expect(found?.booking.cancelledAt).toEqual(LATER);
+    await repository.addBooking(booking(trip.id, '785556677'));
+    expect((await repository.findById(trip.id))?.remainingSeats).toBe(37);
+  });
+
+  it('003-AS3: refuses to save the cancellation of a booking twice', async () => {
+    const { seat } = await tripWithBooking('saly');
+    seat.cancel(LATER);
+    await repository.saveBookingCancellation(seat);
+
+    await expect(repository.saveBookingCancellation(seat)).rejects.toMatchObject({
+      code: 'BOOKING_ALREADY_CANCELLED',
+    });
+  });
+
+  it('003-AS4: no longer lists a cancelled trip, found again by its management code', async () => {
+    const { trip } = await tripWithBooking('diamniadio');
+    trip.cancel(LATER);
+    await repository.saveTripCancellation(trip);
+
+    expect(await repository.listBySiteBetween('diamniadio', DAY.from, DAY.to)).toEqual([]);
+    expect((await repository.findByManagementCode(trip.managementCode))?.cancelledAt).toEqual(
+      LATER,
+    );
+    await expect(repository.saveTripCancellation(trip)).rejects.toMatchObject({
+      code: 'TRIP_ALREADY_CANCELLED',
+    });
+  });
+
+  it('003-AS6: finds a booking and its trip by the booking code', async () => {
+    const { trip, seat } = await tripWithBooking('dakar');
+    const found = await repository.findBookingByCode(seat.bookingCode);
+    expect(found?.booking.id).toBe(seat.id);
+    expect(found?.trip.id).toBe(trip.id);
+    expect(await repository.findBookingByCode('ZZZZ9999')).toBeNull();
+    expect(await repository.findByManagementCode('ZZZZ9999')).toBeNull();
+  });
+
+  it('003-AS7: refuses a booking on a cancelled trip under lock', async () => {
+    const trip = storedTrip('saly', '2026-12-20T09:00:00.000Z');
+    await repository.insert(trip);
+    trip.cancel(LATER);
+    await repository.saveTripCancellation(trip);
+
+    await expect(repository.addBooking(booking(trip.id, '70 111 11 11'))).rejects.toMatchObject({
+      code: 'TRIP_CANCELLED',
+    });
+    expect((await repository.findById(trip.id))?.remainingSeats).toBe(38);
+  });
+});

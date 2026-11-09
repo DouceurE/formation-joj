@@ -1,9 +1,12 @@
-import type { Booking } from '../domain/booking';
+import { Booking } from '../domain/booking';
 import type { BookingRow } from './trips.schema';
+
+/** Ligne de la table → entité. */
+export function toDomain(row: BookingRow): Booking {
+  return Booking.restore(row);
+}
 
 /** Entité → ligne de la table. */
 export function toRow(booking: Booking): BookingRow {
-  // La colonne cancelled_at arrive avec la tâche T04 de la spec 003.
-  const { cancelledAt: _cancelledAt, ...row } = booking.toProps();
-  return row;
+  return booking.toProps();
 }

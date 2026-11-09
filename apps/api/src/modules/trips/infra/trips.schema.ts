@@ -8,6 +8,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const TRIPS_MANAGEMENT_CODE_KEY = 'trips_management_code_key';
 
@@ -27,6 +28,8 @@ export const trips = pgTable(
     driverPhone: varchar('driver_phone', { length: 20 }).notNull(),
     managementCode: varchar('management_code', { length: 8 }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull(),
+    // Nul tant que le conducteur n'a pas annulé : le trajet n'est jamais supprimé (AS6).
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true, precision: 3 }),
   },
   // Un code de gestion désigne un seul trajet : TR3 s'en servira pour annuler.
   (table) => [uniqueIndex(TRIPS_MANAGEMENT_CODE_KEY).on(table.managementCode)],
@@ -50,10 +53,15 @@ export const bookings = pgTable(
     // Sans espaces : c'est lui qui identifie le supporter.
     passengerPhone: varchar('passenger_phone', { length: 20 }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull(),
+    // Nul tant que la place est prise : la réservation n'est jamais supprimée.
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true, precision: 3 }),
   },
   (table) => [
-    // Un même téléphone ne réserve pas deux fois le même trajet, même au même instant.
-    uniqueIndex(BOOKINGS_TRIP_PASSENGER_KEY).on(table.tripId, table.passengerPhone),
+    // Un même téléphone ne réserve pas deux fois le même trajet, même au même instant ;
+    // limité aux réservations actives, pour qu'un supporter qui a annulé puisse revenir.
+    uniqueIndex(BOOKINGS_TRIP_PASSENGER_KEY)
+      .on(table.tripId, table.passengerPhone)
+      .where(sql`${table.cancelledAt} is null`),
     // Un code désigne une seule réservation : TR3 s'en servira pour annuler.
     uniqueIndex(BOOKINGS_BOOKING_CODE_KEY).on(table.bookingCode),
   ],
