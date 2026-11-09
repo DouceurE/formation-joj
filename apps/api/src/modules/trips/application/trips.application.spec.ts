@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { OFFICIAL_LINES } from '../domain/official-lines';
 import { Trip, type TripProps } from '../domain/trip';
+import { FakeTripExtractor } from './testing/fake-trip-extractor';
 import { InMemoryTripRepository } from './testing/in-memory-trip.repository';
 import { BookSeat } from './use-cases/book-seat';
 import { CancelBooking } from './use-cases/cancel-booking';
@@ -8,6 +9,7 @@ import { CancelTrip } from './use-cases/cancel-trip';
 import { GetBooking } from './use-cases/get-booking';
 import { ListOfficialLines } from './use-cases/list-official-lines';
 import { ListTrips } from './use-cases/list-trips';
+import { ProposeTripFromMessage } from './use-cases/propose-trip-from-message';
 import { PublishTrip } from './use-cases/publish-trip';
 
 // Dans le futur, pour que PublishTrip (qui lit l'horloge) accepte le départ.
@@ -250,5 +252,40 @@ describe('official lines are not bookable (application layer)', () => {
     ).rejects.toMatchObject({ code: 'TRIP_NOT_FOUND' });
     expect(trips.bookings).toEqual([]);
     expect((await trips.findById(trip.id))?.remainingSeats).toBe(38);
+  });
+});
+
+describe('proposing a trip from a message (application layer)', () => {
+  const message = 'je pars de Pikine pour Diamniadio demain 8h, Ndiaga 38 places';
+
+  it('005-AS1: proposes a trip without publishing it', async () => {
+    const { listTrips } = setup();
+    const extractor = new FakeTripExtractor();
+    extractor.willReturn({
+      vehicle: 'ndiaga-ndiaye',
+      departurePlace: 'Pikine',
+      site: 'diamniadio',
+      departureAt: `${FUTURE_DAY}T08:00:00.000Z`,
+      seats: 38,
+      priceFcfa: null,
+    });
+
+    const before = new Date();
+    const proposal = await new ProposeTripFromMessage(extractor).execute({ message });
+
+    expect(proposal).toMatchObject({ site: 'diamniadio', seats: 38, priceFcfa: null });
+    expect(extractor.calls).toHaveLength(1);
+    expect(extractor.calls[0]?.message).toBe(message);
+    expect(extractor.calls[0]?.now.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(await listTrips.execute({ site: 'diamniadio', date: FUTURE_DAY })).toEqual([]);
+  });
+
+  it('005-AS6: refuses when the assistant is unavailable', async () => {
+    const extractor = new FakeTripExtractor();
+    extractor.willFail();
+
+    await expect(new ProposeTripFromMessage(extractor).execute({ message })).rejects.toMatchObject({
+      code: 'ASSISTANT_UNAVAILABLE',
+    });
   });
 });
