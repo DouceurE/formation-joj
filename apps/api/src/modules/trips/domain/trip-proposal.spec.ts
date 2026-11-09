@@ -71,3 +71,23 @@ describe('proposeTrip with a date but no time', () => {
     ).toEqual(new Date('2026-11-10T08:00:00.000Z'));
   });
 });
+
+describe('proposeTrip with a time but no time zone', () => {
+  it.each(['2026-11-10T08:00', '2026-11-10T08:00:00', '2026-11-10T08:00:00+01:00'])(
+    '005-AS5: refuses a departure that is not in GMT with a Z (%j), never read in the server time zone',
+    (departureAt) => {
+      expect(() => proposeTrip({ ...extracted, departureAt })).toThrow(
+        rejection('PROPOSAL_DEPARTURE_NOT_FOUND'),
+      );
+    },
+  );
+
+  it.each(['2026-11-10T08:00Z', '2026-11-10T08:00:00Z', '2026-11-10T08:00:00.000Z'])(
+    '005-AS5: accepts a departure in GMT with a Z (%j)',
+    (departureAt) => {
+      expect(proposeTrip({ ...extracted, departureAt }).departureAt).toEqual(
+        new Date('2026-11-10T08:00:00.000Z'),
+      );
+    },
+  );
+});

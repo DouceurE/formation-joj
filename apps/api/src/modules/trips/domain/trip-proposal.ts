@@ -54,8 +54,11 @@ function requiredSite(site: string | null): TripSite {
   return site as TripSite;
 }
 
-/** Un instant ISO 8601 avec son heure : « 2026-11-10 » seul ne doit jamais devenir minuit. */
-const ISO_WITH_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+/**
+ * Un instant ISO 8601 avec son heure et en GMT (`Z`), l'heure de Dakar : « 2026-11-10 » seul ne doit
+ * jamais devenir minuit, ni une heure sans fuseau être lue dans celui du serveur.
+ */
+const ISO_WITH_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?Z$/;
 
 function requiredDeparture(departureAt: string | null): Date {
   const date =
