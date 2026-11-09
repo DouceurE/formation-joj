@@ -8,10 +8,13 @@ export function toDomain(row: TripRow): Trip {
     ...row,
     vehicle: tripVehicleSchema.parse(row.vehicle),
     site: tripSiteSchema.parse(row.site),
+    // Les passagers sont chargés par le repository (T04 de la spec 002).
+    passengerPhones: [],
   });
 }
 
 /** Entité → ligne de la table. */
 export function toRow(trip: Trip): TripRow {
-  return trip.toProps();
+  const { passengerPhones: _passengers, ...row } = trip.toProps();
+  return row;
 }

@@ -34,6 +34,7 @@ function stored(site: TripProps['site'], departureAt: string): Trip {
     seats: 3,
     priceFcfa: 1000,
     driverPhone: '78 000 00 00',
+    passengerPhones: [],
     createdAt: new Date('2026-11-01T00:00:00.000Z'),
   });
 }

@@ -7,7 +7,8 @@ import {
   type TripVehicle,
   VEHICLE_MAX_SEATS,
 } from '@joj/shared';
-import { TripError } from './trips.errors';
+import type { Booking } from './booking';
+import { requiredText, tripAlreadyBooked, TripError, tripFull } from './trips.errors';
 
 export interface TripProps {
   id: string;
@@ -19,6 +20,8 @@ export interface TripProps {
   seats: number;
   priceFcfa: number;
   driverPhone: string;
+  /** Les téléphones, sans espaces, des supporters qui ont déjà réservé. */
+  passengerPhones: readonly string[];
   createdAt: Date;
 }
 
@@ -39,7 +42,7 @@ export interface NewTrip {
 
 /** Un départ vers un site des JOJ : des places dans les limites du véhicule, jamais dans le passé. */
 export class Trip {
-  private constructor(private readonly props: TripProps) {}
+  private constructor(private props: TripProps) {}
 
   static create(input: NewTrip): Trip {
     if (input.departureAt.getTime() < input.now.getTime()) {
@@ -62,13 +65,14 @@ export class Trip {
       seats: validSeats(vehicle, input.seats),
       priceFcfa: validPrice(input.priceFcfa),
       driverPhone: requiredText('driverPhone', input.driverPhone, TRIP_PHONE_MAX_LENGTH),
+      passengerPhones: [],
       createdAt: input.now,
     });
   }
 
   /** Reconstruit un trajet depuis la persistance, sans rejouer les règles de création. */
   static restore(props: TripProps): Trip {
-    return new Trip({ ...props });
+    return new Trip({ ...props, passengerPhones: [...props.passengerPhones] });
   }
 
   get id(): string {
@@ -99,9 +103,12 @@ export class Trip {
     return this.props.seats;
   }
 
-  /** Sans réservation en TR1, toutes les places sont libres. */
+  get passengerPhones(): readonly string[] {
+    return this.props.passengerPhones;
+  }
+
   get remainingSeats(): number {
-    return this.props.seats;
+    return this.props.seats - this.props.passengerPhones.length;
   }
 
   get priceFcfa(): number {
@@ -117,7 +124,25 @@ export class Trip {
   }
 
   toProps(): TripProps {
-    return { ...this.props };
+    return { ...this.props, passengerPhones: [...this.props.passengerPhones] };
+  }
+
+  /** Prend une place. La persistance revérifie sous verrou, pour deux réservations simultanées. */
+  book(booking: Booking, now: Date): void {
+    if (this.props.departureAt.getTime() < now.getTime()) {
+      throw new TripError('TRIP_ALREADY_DEPARTED', 'This trip has already departed', {
+        id: this.props.id,
+        departureAt: this.props.departureAt.toISOString(),
+      });
+    }
+    if (this.props.passengerPhones.includes(booking.passengerPhone)) {
+      throw tripAlreadyBooked(this.props.id);
+    }
+    if (this.remainingSeats <= 0) throw tripFull(this.props.id, this.props.seats);
+    this.props = {
+      ...this.props,
+      passengerPhones: [...this.props.passengerPhones, booking.passengerPhone],
+    };
   }
 }
 
@@ -161,16 +186,4 @@ function validPrice(priceFcfa: number): number {
     });
   }
   return priceFcfa;
-}
-
-function requiredText(field: string, value: string, maxLength: number): string {
-  const trimmed = value.trim();
-  if (trimmed.length === 0 || trimmed.length > maxLength) {
-    throw new TripError(
-      'TRIP_FIELD_REQUIRED',
-      `${field} is required, with at most ${maxLength} characters`,
-      { field },
-    );
-  }
-  return trimmed;
 }
