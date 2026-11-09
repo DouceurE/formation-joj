@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import { publishedTripSchema, tripListSchema } from '@joj/shared';
+import { bookingConfirmationSchema, publishedTripSchema, tripListSchema } from '@joj/shared';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp } from './create-test-app';
@@ -137,5 +137,96 @@ describe('/api/trips (e2e)', () => {
   it('001-AS6: returns an empty list for a day without departure (200)', async () => {
     const response = await api().get('/api/trips?site=saly&date=2030-11-12').expect(200);
     expect(response.body).toEqual([]);
+  });
+});
+
+describe('/api/trips/:id/bookings (e2e)', () => {
+  let app: INestApplication;
+  const api = () => request(app.getHttpServer());
+  const moussa = { passengerName: 'Moussa', passengerPhone: '78 555 66 77' };
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(() => app?.close());
+
+  /** Publie un trajet sur un jour propre au test, et renvoie son identifiant. */
+  async function publish(day: string, overrides: Record<string, unknown> = {}): Promise<string> {
+    const response = await api()
+      .post('/api/trips')
+      .send({ ...ndiaga, departureAt: `${day}T08:00:00.000Z`, ...overrides })
+      .expect(201);
+    return response.body.id;
+  }
+
+  async function remainingSeats(day: string): Promise<number | undefined> {
+    const response = await api().get(`/api/trips?site=diamniadio&date=${day}`).expect(200);
+    return tripListSchema.parse(response.body)[0]?.remainingSeats;
+  }
+
+  it('002-AS1: books a seat (201) with the booking code, departure and driver phone', async () => {
+    const id = await publish('2031-01-01');
+
+    const response = await api().post(`/api/trips/${id}/bookings`).send(moussa).expect(201);
+
+    expect(bookingConfirmationSchema.parse(response.body)).toMatchObject({
+      tripId: id,
+      passengerName: 'Moussa',
+      departurePlace: 'Pikine',
+      departureAt: '2031-01-01T08:00:00.000Z',
+      driverPhone: '77 123 45 67',
+    });
+    expect(response.body.bookingCode).toMatch(/^[A-HJ-NP-Z2-9]{8}$/);
+    expect(await remainingSeats('2031-01-01')).toBe(37);
+  });
+
+  it('002-AS2: rejects a second booking on a one-seat taxi (409, TRIP_FULL)', async () => {
+    const id = await publish('2031-01-02', { vehicle: 'taxi', seats: 1 });
+    await api().post(`/api/trips/${id}/bookings`).send(moussa).expect(201);
+
+    const response = await api()
+      .post(`/api/trips/${id}/bookings`)
+      .send({ passengerName: 'Awa', passengerPhone: '70 222 22 22' })
+      .expect(409);
+
+    expect(response.headers['content-type']).toMatch(/application\/problem\+json/);
+    expect(response.body).toMatchObject({ status: 409, code: 'TRIP_FULL' });
+    expect(await remainingSeats('2031-01-02')).toBe(0);
+  });
+
+  it('002-AS4: rejects the same phone twice on a trip (409, TRIP_ALREADY_BOOKED)', async () => {
+    const id = await publish('2031-01-03');
+    await api().post(`/api/trips/${id}/bookings`).send(moussa).expect(201);
+
+    const response = await api()
+      .post(`/api/trips/${id}/bookings`)
+      .send({ ...moussa, passengerPhone: '785556677' })
+      .expect(409);
+
+    expect(response.body).toMatchObject({ status: 409, code: 'TRIP_ALREADY_BOOKED' });
+    expect(await remainingSeats('2031-01-03')).toBe(37);
+  });
+
+  it('002-AS6: rejects a booking on an unknown trip (404, TRIP_NOT_FOUND)', async () => {
+    const response = await api()
+      .post('/api/trips/0199f5c2-0000-7000-8000-00000000dead/bookings')
+      .send(moussa)
+      .expect(404);
+
+    expect(response.body).toMatchObject({ status: 404, code: 'TRIP_NOT_FOUND' });
+  });
+
+  it('002-AS7: rejects a booking without a phone (400, VALIDATION_FAILED)', async () => {
+    const id = await publish('2031-01-04');
+
+    const response = await api()
+      .post(`/api/trips/${id}/bookings`)
+      .send({ passengerName: 'Moussa' })
+      .expect(400);
+
+    expect(response.body).toMatchObject({ status: 400, code: 'VALIDATION_FAILED' });
+    expect(response.body.errors).toEqual([expect.objectContaining({ path: 'passengerPhone' })]);
+    expect(await remainingSeats('2031-01-04')).toBe(38);
   });
 });
