@@ -52,7 +52,7 @@ export function PublishedTrip({ trip }: { trip: PublishedTripResponse }) {
             id="published-trip-title"
             ref={heading}
             tabIndex={-1}
-            className="font-display text-4xl font-extrabold text-soleil outline-none motion-safe:animate-in motion-safe:zoom-in-90 motion-safe:fade-in motion-safe:duration-500"
+            className="font-display text-4xl font-extrabold text-white outline-none motion-safe:animate-in motion-safe:zoom-in-90 motion-safe:fade-in motion-safe:duration-500"
           >
             Dem na !
           </h1>

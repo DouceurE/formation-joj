@@ -10,8 +10,9 @@ const VEHICLE_ICONS: Record<TripVehicle, LucideIcon> = {
 };
 
 /**
- * Trois grandes cases, une par véhicule : de vrais boutons radio, cachés sous leur case, pour
- * que le clavier et les lecteurs d'écran s'en servent comme d'une liste de choix.
+ * Trois grandes cases, une par véhicule : de vrais boutons radio, invisibles et étendus sur
+ * toute leur case, pour que le doigt, le clavier et les lecteurs d'écran s'en servent comme
+ * d'une liste de choix.
  */
 export function VehiclePicker({
   value,
@@ -34,7 +35,7 @@ export function VehiclePicker({
             <label
               key={vehicle}
               className={cn(
-                'flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-input bg-card p-3 text-center font-semibold',
+                'relative flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-input bg-card p-3 text-center font-semibold',
                 'has-[:checked]:border-baobab has-[:checked]:bg-baobab has-[:checked]:text-white',
                 'has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50',
                 'motion-safe:transition-colors',
@@ -46,7 +47,7 @@ export function VehiclePicker({
                 value={vehicle}
                 checked={value === vehicle}
                 onChange={() => onChange(vehicle)}
-                className="sr-only"
+                className="absolute inset-0 min-h-11 cursor-pointer opacity-0"
               />
               <Icon aria-hidden="true" className="size-7" />
               {VEHICLE_LABELS[vehicle]}
