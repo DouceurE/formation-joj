@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { OFFICIAL_LINES } from '../domain/official-lines';
 import { Trip, type TripProps } from '../domain/trip';
 import { InMemoryTripRepository } from './testing/in-memory-trip.repository';
 import { BookSeat } from './use-cases/book-seat';
@@ -234,5 +235,20 @@ describe('official lines (application layer)', () => {
     expect(lines).toHaveLength(2);
     expect(lines.every((line) => line.site === 'diamniadio')).toBe(true);
     expect(new ListOfficialLines().execute({ site: 'dakar' })).toEqual([]);
+  });
+});
+
+describe('official lines are not bookable (application layer)', () => {
+  it('004-AS4: refuses a booking on an official line and records nothing', async () => {
+    const { trips, publishTrip, bookSeat } = setup();
+    // Un vrai trajet en base, pour que « rien n'est enregistré » ne soit pas trivialement vrai.
+    const trip = await publishTrip.execute(ndiaga);
+    const line = OFFICIAL_LINES[0];
+
+    await expect(
+      bookSeat.execute(line?.id ?? '', { passengerName: 'Moussa', passengerPhone: '78 555 66 77' }),
+    ).rejects.toMatchObject({ code: 'TRIP_NOT_FOUND' });
+    expect(trips.bookings).toEqual([]);
+    expect((await trips.findById(trip.id))?.remainingSeats).toBe(38);
   });
 });

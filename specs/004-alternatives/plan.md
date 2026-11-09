@@ -71,4 +71,4 @@ Quatre tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire
 
 Écart bloquant relevé par le relecteur (base `d21f038^`).
 
-- [ ] T05 [004-AS4] Écrire d'abord dans `application/trips.application.spec.ts` (« 004-AS4: refuses a booking on an official line and records nothing »), un test où `BookSeat` sur l'identifiant d'une ligne officielle lève `TRIP_NOT_FOUND` et où le repository en mémoire n'a enregistré aucune réservation ; test de couverture, il peut passer d'emblée ; preuve : relecteur, `apps/api/test/trips.e2e.spec.ts:401-410` (« et rien n'est enregistré » n'est vérifié par aucun test)
+- [x] T05 [004-AS4] Écrire d'abord dans `application/trips.application.spec.ts` (« 004-AS4: refuses a booking on an official line and records nothing »), un test où `BookSeat` sur l'identifiant d'une ligne officielle lève `TRIP_NOT_FOUND` et où le repository en mémoire n'a enregistré aucune réservation ; test de couverture, il peut passer d'emblée ; preuve : relecteur, `apps/api/test/trips.e2e.spec.ts:401-410` (« et rien n'est enregistré » n'est vérifié par aucun test)
