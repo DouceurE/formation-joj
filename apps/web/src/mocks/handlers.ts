@@ -1,7 +1,12 @@
-import type { ProblemDetails } from '@joj/shared';
-import { delay, HttpResponse, type RequestHandler } from 'msw';
+import {
+  listOfficialLinesQuerySchema,
+  listTripsQuerySchema,
+  type ProblemDetails,
+} from '@joj/shared';
+import { delay, http, HttpResponse, type RequestHandler } from 'msw';
 import type { z } from 'zod';
 import { mockControl } from './control';
+import { fixture } from './fixture';
 
 /**
  * La fausse API des tests du front : le même contrat que apps/api (mêmes schémas zod, mêmes
@@ -48,4 +53,37 @@ export function validationFailed(error: z.ZodError) {
   });
 }
 
-export const handlers: RequestHandler[] = [];
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Les paramètres de l'adresse, lus comme l'API : `?site=…&date=…`. */
+const searchParams = (request: Request) =>
+  Object.fromEntries(new URL(request.url).searchParams.entries());
+
+export const handlers: RequestHandler[] = [
+  // Comme l'API (TR1) : les trajets du site entre minuit et minuit GMT, triés par heure de départ.
+  http.get('*/api/trips', async ({ request }) => {
+    const failure = await gate('GET', '/api/trips');
+    if (failure) return failure;
+    const parsed = listTripsQuerySchema.safeParse(searchParams(request));
+    if (!parsed.success) return validationFailed(parsed.error);
+    const from = Date.parse(`${parsed.data.date}T00:00:00.000Z`);
+    const trips = fixture.trips
+      .filter((trip) => {
+        const at = Date.parse(trip.departureAt);
+        return trip.site === parsed.data.site && at >= from && at < from + ONE_DAY_MS;
+      })
+      .sort((a, b) => Date.parse(a.departureAt) - Date.parse(b.departureAt));
+    return HttpResponse.json(trips);
+  }),
+
+  // Comme l'API (TR4) : les lignes officielles du site, dans l'ordre de la liste fixe.
+  http.get('*/api/official-lines', async ({ request }) => {
+    const failure = await gate('GET', '/api/official-lines');
+    if (failure) return failure;
+    const parsed = listOfficialLinesQuerySchema.safeParse(searchParams(request));
+    if (!parsed.success) return validationFailed(parsed.error);
+    return HttpResponse.json(
+      fixture.officialLines.filter((line) => line.site === parsed.data.site),
+    );
+  }),
+];

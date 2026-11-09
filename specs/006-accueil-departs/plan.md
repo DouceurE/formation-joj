@@ -74,7 +74,7 @@ AS7 demande aussi moins de 3 secondes sur une 4G lente : cela se mesure dans un 
 
 Cinq tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d'abord et cite les scénarios qu'elle couvre ; elle tient dans un commit.
 
-- [ ] T01 [006-AS2, AS3] Écrire d'abord `apps/web/src/mocks/handlers.test.ts` (« 006-AS2: serves the trips of a site for a day, sorted by departure »), puis les données `trips` et `officialLines` de `fixture.ts` et les deux routes de `handlers.ts`
+- [x] T01 [006-AS2, AS3] Écrire d'abord `apps/web/src/mocks/handlers.test.ts` (« 006-AS2: serves the trips of a site for a day, sorted by departure »), puis les données `trips` et `officialLines` de `fixture.ts` et les deux routes de `handlers.ts`
 - [ ] T02 [006-AS6, AS7] Écrire d'abord `apps/web/src/brand/palette.test.ts` et `assets.test.ts` (« 006-AS6: every text colour of the charter reaches AA », « 006-AS7: brand images are compressed WebP »), puis `palette.ts`, les jetons de `styles.css` et les polices hébergées
 - [ ] T03 [006-AS1] Écrire d'abord `apps/web/src/features/home/components/home-page.test.tsx` (« 006-AS1: says the service in one sentence and leads to the departures »), puis `lucide-react`, `SiteHeader`, `CarRapideFrieze`, `HomePage` et la route `/`
 - [ ] T04 [006-AS2, AS3, AS4, AS5] Écrire d'abord `apps/web/src/features/trips/components/departures-page.test.tsx` (« 006-AS4: says there is no departure that day, and still shows the official lines »), puis `trips.api.ts`, `trips.queries.ts`, `DeparturesPage`, `TripCard`, `OfficialLineCard` et la route `/departs`
