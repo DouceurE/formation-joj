@@ -5,6 +5,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockControl } from '@/mocks/control';
 import { carAt8, departedCar, fullTaxi, ndiagaAt10 } from '@/mocks/fixture';
 import { renderRoute, trackRequests } from '@/test/utils';
 
@@ -101,5 +102,19 @@ describe('BookingPage', () => {
     expect(await screen.findByText('Ton nom est obligatoire.')).toBeInTheDocument();
     expect(screen.getByText('Ton téléphone est obligatoire.')).toBeInTheDocument();
     expect(seen.filter((request) => request.method === 'POST')).toEqual([]);
+  });
+});
+
+describe('BookingPage when the trip cannot be loaded', () => {
+  it('007-AS4: shows « Réessayer » when the trip cannot be loaded, not « Trajet introuvable »', async () => {
+    const user = userEvent.setup();
+    mockControl.failNext('GET /api/trips');
+    await renderRoute({ initialEntries: [bookingUrl(carAt8.id, 'diamniadio', '2026-11-10')] });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger ce trajet.');
+    expect(screen.queryByText('Trajet introuvable')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Réessayer' }));
+    expect(await screen.findByRole('button', { name: 'Réserver ma place' })).toBeInTheDocument();
   });
 });

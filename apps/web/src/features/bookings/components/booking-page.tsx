@@ -1,7 +1,7 @@
 import type { TripSite } from '@joj/shared';
 import { Link } from '@tanstack/react-router';
 import { AlertTriangle } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { useTripsOfDay } from '@/features/trips/api/trips.queries';
 import {
   departureTime,
@@ -36,7 +36,24 @@ function BookingForTrip({ tripId, site, date }: { tripId: string; site: TripSite
   const booking = useBookSeat(tripId);
 
   if (trips.isPending) return <p>Chargement du trajet…</p>;
-  const trip = trips.data?.find((candidate) => candidate.id === tripId);
+  // Une panne n'est pas un trajet qui n'existe pas : on propose de réessayer, comme en TR6.
+  if (trips.isError) {
+    return (
+      <div
+        role="alert"
+        className="flex flex-col items-start gap-3 rounded-lg border-2 border-laterite bg-card p-4 text-laterite-fonce"
+      >
+        <p className="flex items-center gap-2 font-semibold">
+          <AlertTriangle aria-hidden="true" className="size-5" />
+          Impossible de charger ce trajet.
+        </p>
+        <Button variant="destructive" className="min-h-11" onClick={() => void trips.refetch()}>
+          Réessayer
+        </Button>
+      </div>
+    );
+  }
+  const trip = trips.data.find((candidate) => candidate.id === tripId);
   if (!trip) return <TripNotFound />;
 
   return (
