@@ -78,3 +78,29 @@ describe('DeparturesPage', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
+
+describe('DeparturesPage colours of the charter', () => {
+  it('006-AS3: shows the official lines in Atlantic blue', async () => {
+    await renderRoute({ initialEntries: ['/departs?site=diamniadio&date=2026-11-10'] });
+
+    const lines = within(
+      await screen.findByRole('list', { name: 'Lignes officielles' }),
+    ).getAllByRole('listitem');
+    for (const line of lines) {
+      expect(line).toHaveClass('border-atlantique');
+      expect(within(line).getByText(/^(Navette JOJ|Dakar Dem Dikk)$/)).toHaveClass(
+        'text-atlantique',
+      );
+    }
+  });
+
+  it('006-AS5: shows the error in laterite red', async () => {
+    mockControl.failNext('GET /api/trips');
+    await renderRoute({ initialEntries: ['/departs?site=diamniadio&date=2026-11-10'] });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveClass('border-laterite');
+    // Le rouge latérite clair ne passe pas AA en texte : le message est en latérite foncé.
+    expect(alert).toHaveClass('text-laterite-fonce');
+  });
+});
