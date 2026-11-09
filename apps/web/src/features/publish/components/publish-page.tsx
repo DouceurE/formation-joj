@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { todayInDakar } from '@/features/trips/components/labels';
 import { usePublishTrip } from '../api/publish.queries';
 import { AnnouncementReader } from './announcement-reader';
+import { CancelTripForm } from './cancel-trip-form';
 import { publishErrorMessage } from './publish-messages';
 import { PublishedTrip } from './published-trip';
 import { type TripDraft, TripForm } from './trip-form';
@@ -36,7 +37,10 @@ function draftFromProposal(proposal: TripProposalResponse): TripDraft {
   };
 }
 
-/** L'écran du conducteur : l'annonce à lire, le formulaire, puis « Dem na ! » et son code. */
+/**
+ * L'écran du conducteur : l'annonce à lire, le formulaire, puis « Dem na ! » et son code ;
+ * en bas, « Annuler mon trajet ».
+ */
 export function PublishPage() {
   const publish = usePublishTrip();
   // Chaque proposition remplace le formulaire : une nouvelle clé le remonte avec ses valeurs.
@@ -71,6 +75,7 @@ export function PublishPage() {
         pending={publish.isPending}
         onSubmit={(input) => publish.mutate(input)}
       />
+      <CancelTripForm />
     </div>
   );
 }

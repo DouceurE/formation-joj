@@ -1,5 +1,8 @@
 import { ApiError } from '@/lib/api';
 
+/** Un code de gestion inconnu, ou mal tapé : pour le conducteur, c'est la même chose. */
+export const UNKNOWN_TRIP_CODE_MESSAGE = 'Aucun trajet avec ce code.';
+
 /** Les refus de l'API dits avec des mots de tous les jours, jamais avec leur code. */
 const MESSAGES: Record<string, string> = {
   DEPARTURE_IN_PAST: 'Ce départ est déjà passé.',
@@ -8,6 +11,8 @@ const MESSAGES: Record<string, string> = {
     'Je n’ai pas trouvé le site (Dakar, Diamniadio ou Saly) dans ton annonce.',
   PROPOSAL_DEPARTURE_NOT_FOUND: 'Je n’ai pas trouvé l’heure de départ dans ton annonce.',
   ASSISTANT_UNAVAILABLE: 'L’assistant ne répond pas, remplis le formulaire.',
+  TRIP_NOT_FOUND: UNKNOWN_TRIP_CODE_MESSAGE,
+  TRIP_ALREADY_CANCELLED: 'Ce trajet est déjà annulé.',
 };
 
 /** Le refus des places dépend du véhicule : l'API dit lequel dans `details`. */

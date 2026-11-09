@@ -13,3 +13,12 @@ export function usePublishTrip() {
 
 /** Lire une annonce ne change aucune donnée : rien à relire dans le cache. */
 export const useProposeTrip = () => useMutation({ mutationFn: publishApi.propose });
+
+export function useCancelTrip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: publishApi.cancel,
+    // Les départs sont relus : le trajet annulé en disparaît.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tripKeys.all }),
+  });
+}

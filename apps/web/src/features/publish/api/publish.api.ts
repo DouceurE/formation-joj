@@ -1,4 +1,6 @@
 import {
+  type CancelledTripResponse,
+  cancelledTripSchema,
   type PublishedTripResponse,
   type PublishTripInput,
   publishedTripSchema,
@@ -25,5 +27,12 @@ export const publishApi = {
       method: 'POST',
       body: { message },
       schema: tripProposalSchema,
+    }),
+
+  cancel: (managementCode: string) =>
+    api.request<CancelledTripResponse>('/trips/cancel', {
+      method: 'POST',
+      body: { managementCode },
+      schema: cancelledTripSchema,
     }),
 };
