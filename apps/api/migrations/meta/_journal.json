@@ -15,6 +15,13 @@
       "when": 1794219758804,
       "tag": "0001_trips-price-bigint",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794221286621,
+      "tag": "0002_bookings",
+      "breakpoints": true
     }
   ]
 }

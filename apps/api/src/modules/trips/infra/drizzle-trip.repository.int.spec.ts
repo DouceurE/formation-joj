@@ -2,12 +2,13 @@ import { randomUUID } from 'node:crypto';
 import type { TripSite } from '@joj/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type DatabaseConnection, openDatabase } from '../../../core/database/database';
+import { Booking } from '../domain/booking';
 import { Trip } from '../domain/trip';
 import { DrizzleTripRepository } from './drizzle-trip.repository';
 
 let count = 0;
 // restore() et non create() : un trajet déjà parti doit pouvoir être relu et listé.
-const storedTrip = (site: TripSite, departureAt: string) => {
+const storedTrip = (site: TripSite, departureAt: string, seats = 38) => {
   count += 1;
   return Trip.restore({
     id: randomUUID(),
@@ -16,7 +17,7 @@ const storedTrip = (site: TripSite, departureAt: string) => {
     departurePlace: 'Pikine',
     site,
     departureAt: new Date(departureAt),
-    seats: 38,
+    seats,
     priceFcfa: 500,
     driverPhone: '77 123 45 67',
     passengerPhones: [],
@@ -89,5 +90,74 @@ describe('DrizzleTripRepository (in-memory PGlite, migrations applied)', () => {
         new Date('2026-11-13T00:00:00.000Z'),
       ),
     ).toEqual([]);
+  });
+});
+
+describe('DrizzleTripRepository bookings (in-memory PGlite, migrations applied)', () => {
+  let connection: DatabaseConnection;
+  let repository: DrizzleTripRepository;
+
+  beforeAll(async () => {
+    connection = openDatabase({ pgliteDataDir: 'memory://' });
+    await connection.migrate();
+    repository = new DrizzleTripRepository(connection.db);
+  });
+
+  afterAll(() => connection?.close());
+
+  let bookingCount = 0;
+  const booking = (tripId: string, passengerPhone: string) => {
+    bookingCount += 1;
+    return Booking.create({
+      id: randomUUID(),
+      bookingCode: `BOOK${String(bookingCount).padStart(4, '0')}`,
+      tripId,
+      passengerName: 'Supporter',
+      passengerPhone,
+      now: new Date('2026-11-09T09:00:00.000Z'),
+    });
+  };
+
+  it('002-AS1: reads back the passenger and 37 remaining seats after a booking', async () => {
+    const trip = storedTrip('diamniadio', '2026-12-10T08:00:00.000Z');
+    await repository.insert(trip);
+    await repository.addBooking(booking(trip.id, '78 555 66 77'));
+
+    const found = await repository.findById(trip.id);
+    expect(found?.passengerPhones).toEqual(['785556677']);
+    expect(found?.remainingSeats).toBe(37);
+    const [listed] = await repository.listBySiteBetween(
+      'diamniadio',
+      new Date('2026-12-10T00:00:00.000Z'),
+      new Date('2026-12-11T00:00:00.000Z'),
+    );
+    expect(listed?.remainingSeats).toBe(37);
+    expect(await repository.findById(randomUUID())).toBeNull();
+  });
+
+  it('002-AS3: accepts only one of two simultaneous bookings on the last seat', async () => {
+    const trip = storedTrip('saly', '2026-12-10T08:00:00.000Z', 1);
+    await repository.insert(trip);
+
+    const results = await Promise.allSettled([
+      repository.addBooking(booking(trip.id, '70 111 11 11')),
+      repository.addBooking(booking(trip.id, '70 222 22 22')),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const [rejected] = results.filter((result) => result.status === 'rejected');
+    expect(rejected?.reason).toMatchObject({ code: 'TRIP_FULL' });
+    expect((await repository.findById(trip.id))?.remainingSeats).toBe(0);
+  });
+
+  it('002-AS4: refuses a second booking with the same phone through the unique index', async () => {
+    const trip = storedTrip('dakar', '2026-12-10T08:00:00.000Z');
+    await repository.insert(trip);
+    await repository.addBooking(booking(trip.id, '78 555 66 77'));
+
+    await expect(repository.addBooking(booking(trip.id, '785556677'))).rejects.toMatchObject({
+      code: 'TRIP_ALREADY_BOOKED',
+    });
+    expect((await repository.findById(trip.id))?.remainingSeats).toBe(37);
   });
 });

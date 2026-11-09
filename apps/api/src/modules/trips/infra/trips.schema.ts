@@ -33,3 +33,30 @@ export const trips = pgTable(
 );
 
 export type TripRow = typeof trips.$inferSelect;
+
+export const BOOKINGS_TRIP_PASSENGER_KEY = 'bookings_trip_passenger_key';
+export const BOOKINGS_BOOKING_CODE_KEY = 'bookings_booking_code_key';
+
+export const bookings = pgTable(
+  'bookings',
+  {
+    id: uuid('id').primaryKey(),
+    // On ne réserve que sur un trajet qui existe.
+    tripId: uuid('trip_id')
+      .notNull()
+      .references(() => trips.id),
+    bookingCode: varchar('booking_code', { length: 8 }).notNull(),
+    passengerName: varchar('passenger_name', { length: 100 }).notNull(),
+    // Sans espaces : c'est lui qui identifie le supporter.
+    passengerPhone: varchar('passenger_phone', { length: 20 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull(),
+  },
+  (table) => [
+    // Un même téléphone ne réserve pas deux fois le même trajet, même au même instant.
+    uniqueIndex(BOOKINGS_TRIP_PASSENGER_KEY).on(table.tripId, table.passengerPhone),
+    // Un code désigne une seule réservation : TR3 s'en servira pour annuler.
+    uniqueIndex(BOOKINGS_BOOKING_CODE_KEY).on(table.bookingCode),
+  ],
+);
+
+export type BookingRow = typeof bookings.$inferSelect;
