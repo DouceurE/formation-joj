@@ -109,3 +109,20 @@ describe('MyTripsPage', () => {
     expect(router.state.location.pathname).toBe('/mes-trajets');
   });
 });
+
+describe('MyTripsPage code of the wrong length', () => {
+  it.each(['ABC2345', 'ABC234567'])(
+    '007-AS5: says « Aucune réservation avec ce code. » for a code of the wrong length (%s)',
+    async (code) => {
+      const user = userEvent.setup();
+      await renderRoute({ initialEntries: ['/mes-trajets'] });
+
+      await user.type(await screen.findByLabelText('Code de réservation'), code);
+      await user.click(screen.getByRole('button', { name: 'Retrouver' }));
+
+      expect(await screen.findByText('Aucune réservation avec ce code.')).toBeInTheDocument();
+      expect(screen.queryByText(/nom et ton téléphone/)).not.toBeInTheDocument();
+      expect(savedBookings.list()).toEqual([]);
+    },
+  );
+});

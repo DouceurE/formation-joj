@@ -18,10 +18,11 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { departureTime } from '@/features/trips/components/labels';
+import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { bookingQueryOptions, useBookings, useCancelBooking } from '../api/bookings.queries';
 import { savedBookings } from '../storage/saved-bookings';
-import { bookingErrorMessage } from './booking-messages';
+import { bookingErrorMessage, UNKNOWN_CODE_MESSAGE } from './booking-messages';
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
   confirmee: 'Confirmée',
@@ -181,7 +182,10 @@ function FindByCode({ onFound }: { onFound: (code: string) => void }) {
       setMessage(null);
       onFound(code);
     } catch (error) {
-      setMessage(bookingErrorMessage(error));
+      // Un code mal tapé (pas 8 caractères) est refusé comme mal formé : pour le supporter,
+      // c'est simplement un code qui ne mène à aucune réservation.
+      const malformed = error instanceof ApiError && error.code === 'VALIDATION_FAILED';
+      setMessage(malformed ? UNKNOWN_CODE_MESSAGE : bookingErrorMessage(error));
     } finally {
       setPending(false);
     }
