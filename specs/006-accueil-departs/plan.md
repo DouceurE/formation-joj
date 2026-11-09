@@ -79,3 +79,12 @@ Cinq tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire d
 - [x] T03 [006-AS1] Écrire d'abord `apps/web/src/features/home/components/home-page.test.tsx` (« 006-AS1: says the service in one sentence and leads to the departures »), puis `lucide-react`, `SiteHeader`, `CarRapideFrieze`, `HomePage` et la route `/`
 - [x] T04 [006-AS2, AS3, AS4, AS5] Écrire d'abord `apps/web/src/features/trips/components/departures-page.test.tsx` (« 006-AS4: says there is no departure that day, and still shows the official lines »), puis `trips.api.ts`, `trips.queries.ts`, `DeparturesPage`, `TripCard`, `OfficialLineCard` et la route `/departs`
 - [x] T05 [006-AS6] Écrire d'abord `apps/web/src/routes/home.a11y.test.tsx` et `departs.a11y.test.tsx` (« 006-AS6: the departures page is clean when the day is empty »), puis corriger ce que l'audit, la règle `motion-safe:` et la règle `min-h-11` relèvent
+
+## 7. Corrections
+
+### Passage 1
+
+Écarts bloquants relevés par le relecteur (base `50fad57^`).
+
+- [ ] T06 [006-AS6] Écrire d'abord `apps/web/src/brand/dark-mode.test.ts` (« 006-AS6: keeps the charter colours when the phone is in dark mode »), un test qui vérifie que la variante `dark:` de Tailwind ne dépend que d'une classe `.dark`, jamais posée, et pas du mode sombre du téléphone, puis remettre `@custom-variant dark (&:is(.dark *));` dans `styles.css` ; preuve : relecteur, `apps/web/src/styles.css:1-4` (en mode sombre, « Réessayer » tombe à 2,74:1, sous AA)
+- [ ] T07 [006-AS3, AS5] Écrire d'abord dans `apps/web/src/features/trips/components/departures-page.test.tsx` (« 006-AS3: shows the official lines in Atlantic blue », « 006-AS5: shows the error in laterite red »), des assertions sur les classes de la charte : `border-atlantique` et `text-atlantique` sur chaque carte de ligne officielle, `border-laterite` et `text-laterite-fonce` sur l'alerte ; preuve : relecteur, `departures-page.test.tsx`, tests 006-AS3 et 006-AS5 (la couleur demandée par l'« Alors » n'est pas vérifiée)
