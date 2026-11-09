@@ -21,6 +21,7 @@ const storedTrip = (site: TripSite, departureAt: string, seats = 38) => {
     priceFcfa: 500,
     driverPhone: '77 123 45 67',
     passengerPhones: [],
+    cancelledAt: null,
     createdAt: new Date('2026-11-09T09:00:00.123Z'),
   });
 };

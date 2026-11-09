@@ -1,6 +1,6 @@
 import { TRIP_NAME_MAX_LENGTH, TRIP_PHONE_MAX_LENGTH } from '@joj/shared';
 import { normalizePhone } from './phone';
-import { requiredText } from './trips.errors';
+import { bookingAlreadyCancelled, requiredText } from './trips.errors';
 
 export interface BookingProps {
   id: string;
@@ -10,6 +10,8 @@ export interface BookingProps {
   /** Sans espaces : c'est lui qui identifie le supporter. */
   passengerPhone: string;
   createdAt: Date;
+  /** L'instant de l'annulation, ou null tant que la place est prise. */
+  cancelledAt: Date | null;
 }
 
 export interface NewBooking {
@@ -24,7 +26,7 @@ export interface NewBooking {
 
 /** Une place réservée sur un trajet par un supporter, reconnu à son téléphone. */
 export class Booking {
-  private constructor(private readonly props: BookingProps) {}
+  private constructor(private props: BookingProps) {}
 
   static create({
     id,
@@ -43,6 +45,7 @@ export class Booking {
         requiredText('passengerPhone', passengerPhone, TRIP_PHONE_MAX_LENGTH),
       ),
       createdAt: now,
+      cancelledAt: null,
     });
   }
 
@@ -73,6 +76,16 @@ export class Booking {
 
   get createdAt(): Date {
     return this.props.createdAt;
+  }
+
+  get cancelledAt(): Date | null {
+    return this.props.cancelledAt;
+  }
+
+  /** Rend la place. La persistance revérifie, pour deux annulations simultanées. */
+  cancel(now: Date): void {
+    if (this.props.cancelledAt) throw bookingAlreadyCancelled(this.props.id);
+    this.props = { ...this.props, cancelledAt: now };
   }
 
   toProps(): BookingProps {

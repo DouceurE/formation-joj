@@ -8,7 +8,14 @@ import {
   VEHICLE_MAX_SEATS,
 } from '@joj/shared';
 import type { Booking } from './booking';
-import { requiredText, tripAlreadyBooked, TripError, tripFull } from './trips.errors';
+import {
+  requiredText,
+  tripAlreadyBooked,
+  tripAlreadyCancelled,
+  tripCancelled,
+  TripError,
+  tripFull,
+} from './trips.errors';
 
 export interface TripProps {
   id: string;
@@ -23,6 +30,8 @@ export interface TripProps {
   /** Les téléphones, sans espaces, des supporters qui ont déjà réservé. */
   passengerPhones: readonly string[];
   createdAt: Date;
+  /** L'instant de l'annulation par le conducteur, ou null tant que le trajet tient. */
+  cancelledAt: Date | null;
 }
 
 export interface NewTrip {
@@ -67,6 +76,7 @@ export class Trip {
       driverPhone: requiredText('driverPhone', input.driverPhone, TRIP_PHONE_MAX_LENGTH),
       passengerPhones: [],
       createdAt: input.now,
+      cancelledAt: null,
     });
   }
 
@@ -123,12 +133,23 @@ export class Trip {
     return this.props.createdAt;
   }
 
+  get cancelledAt(): Date | null {
+    return this.props.cancelledAt;
+  }
+
+  /** Retire le trajet. La persistance revérifie, pour deux annulations simultanées. */
+  cancel(now: Date): void {
+    if (this.props.cancelledAt) throw tripAlreadyCancelled(this.props.id);
+    this.props = { ...this.props, cancelledAt: now };
+  }
+
   toProps(): TripProps {
     return { ...this.props, passengerPhones: [...this.props.passengerPhones] };
   }
 
   /** Prend une place. La persistance revérifie sous verrou, pour deux réservations simultanées. */
   book(booking: Booking, now: Date): void {
+    if (this.props.cancelledAt) throw tripCancelled(this.props.id);
     if (this.props.departureAt.getTime() < now.getTime()) {
       throw new TripError('TRIP_ALREADY_DEPARTED', 'This trip has already departed', {
         id: this.props.id,

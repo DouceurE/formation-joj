@@ -9,11 +9,13 @@ export function toDomain(row: TripRow, passengerPhones: readonly string[]): Trip
     vehicle: tripVehicleSchema.parse(row.vehicle),
     site: tripSiteSchema.parse(row.site),
     passengerPhones,
+    // La colonne arrive avec la tâche T04 de la spec 003.
+    cancelledAt: null,
   });
 }
 
 /** Entité → ligne de la table. Les passagers vivent dans la table `bookings`. */
 export function toRow(trip: Trip): TripRow {
-  const { passengerPhones: _passengers, ...row } = trip.toProps();
+  const { passengerPhones: _passengers, cancelledAt: _cancelledAt, ...row } = trip.toProps();
   return row;
 }

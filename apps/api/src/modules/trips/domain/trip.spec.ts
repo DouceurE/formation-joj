@@ -144,3 +144,29 @@ describe('Trip.book', () => {
     expect(trip.remainingSeats).toBe(37);
   });
 });
+
+describe('Trip cancellation', () => {
+  const LATER = new Date('2026-11-09T18:00:00.000Z');
+
+  it('003-AS4: records the moment of the cancellation', () => {
+    const trip = publish();
+    expect(trip.cancelledAt).toBeNull();
+    trip.cancel(LATER);
+    expect(trip.cancelledAt).toEqual(LATER);
+  });
+
+  it('003-AS5: refuses to cancel a trip twice', () => {
+    const trip = publish();
+    trip.cancel(LATER);
+    expect(() => trip.cancel(LATER)).toThrow(rejection('TRIP_ALREADY_CANCELLED', 'CONFLICT'));
+  });
+
+  it('003-AS7: refuses a booking on a cancelled trip', () => {
+    const trip = publish();
+    trip.cancel(LATER);
+    expect(() => trip.book(booking('78 555 66 77'), LATER)).toThrow(
+      rejection('TRIP_CANCELLED', 'BUSINESS_RULE'),
+    );
+    expect(trip.remainingSeats).toBe(38);
+  });
+});

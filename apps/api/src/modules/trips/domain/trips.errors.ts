@@ -25,6 +25,14 @@ const TRIP_ERROR_KINDS = {
   TRIP_ALREADY_DEPARTED: 'BUSINESS_RULE',
   /** Aucun trajet n'a cet identifiant. */
   TRIP_NOT_FOUND: 'NOT_FOUND',
+  /** Aucune réservation n'a ce code. */
+  BOOKING_NOT_FOUND: 'NOT_FOUND',
+  /** La réservation est déjà annulée. */
+  BOOKING_ALREADY_CANCELLED: 'CONFLICT',
+  /** Le trajet est déjà annulé. */
+  TRIP_ALREADY_CANCELLED: 'CONFLICT',
+  /** On ne réserve pas sur un trajet annulé. */
+  TRIP_CANCELLED: 'BUSINESS_RULE',
 } as const satisfies Record<string, ErrorKind>;
 
 export type TripErrorCode = keyof typeof TRIP_ERROR_KINDS;
@@ -47,6 +55,22 @@ export function tripAlreadyBooked(id: string): TripError {
 
 export function tripNotFound(id: string): TripError {
   return new TripError('TRIP_NOT_FOUND', `No trip with id ${id}`, { id });
+}
+
+export function bookingNotFound(code: string): TripError {
+  return new TripError('BOOKING_NOT_FOUND', `No booking with code ${code}`, { code });
+}
+
+export function bookingAlreadyCancelled(id: string): TripError {
+  return new TripError('BOOKING_ALREADY_CANCELLED', `Booking ${id} is already cancelled`, { id });
+}
+
+export function tripAlreadyCancelled(id: string): TripError {
+  return new TripError('TRIP_ALREADY_CANCELLED', `Trip ${id} is already cancelled`, { id });
+}
+
+export function tripCancelled(id: string): TripError {
+  return new TripError('TRIP_CANCELLED', `Trip ${id} has been cancelled by its driver`, { id });
 }
 
 /** Un champ texte obligatoire : sans espaces autour, non vide, pas trop long. */
