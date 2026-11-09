@@ -17,6 +17,8 @@ export const COLORS = {
   sable: '#FBF7EF',
   /** Le texte courant. */
   texte: '#14261C',
+  /** Le fond des messages discrets (« Aucun départ ce jour-là »), `--muted` dans `styles.css`. */
+  muted: '#EFE8D8',
   blanc: '#FFFFFF',
 } as const;
 
@@ -34,6 +36,10 @@ export const TEXT_PAIRS: readonly { text: ColorName; background: ColorName }[] =
   { text: 'blanc', background: 'atlantique' },
   { text: 'lateriteFonce', background: 'sable' },
   { text: 'blanc', background: 'lateriteFonce' },
+  // L'alerte d'erreur et l'heure d'un départ sont sur une carte blanche.
+  { text: 'lateriteFonce', background: 'blanc' },
+  { text: 'baobab', background: 'blanc' },
+  { text: 'texte', background: 'muted' },
 ];
 
 /** Luminance relative d'une couleur `#RRGGBB`, selon WCAG 2. */

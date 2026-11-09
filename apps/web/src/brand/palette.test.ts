@@ -22,6 +22,17 @@ describe('charter palette', () => {
     expect(TEXT_PAIRS.some((pair) => pair.text === 'laterite')).toBe(false);
   });
 
+  it('006-AS6: covers every text colour used on screen', () => {
+    // L'alerte d'erreur, l'heure d'un départ, et le message « Aucun départ ce jour-là ».
+    expect(TEXT_PAIRS).toEqual(
+      expect.arrayContaining([
+        { text: 'lateriteFonce', background: 'blanc' },
+        { text: 'baobab', background: 'blanc' },
+        { text: 'texte', background: 'muted' },
+      ]),
+    );
+  });
+
   it('006-AS6: computes the WCAG ratio of black on white as 21:1', () => {
     expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 5);
   });
