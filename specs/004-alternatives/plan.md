@@ -64,3 +64,11 @@ Quatre tâches, dans l'ordre des couches. Chaque tâche nomme le test à écrire
 - [x] T02 [004-AS1, AS3, AS4] Écrire d'abord `domain/official-lines.spec.ts` (« 004-AS1: lists the two official lines to Diamniadio », « 004-AS3: has no official line to Dakar »), puis `OFFICIAL_LINES` et `officialLinesTo()` dans `domain/official-lines.ts`
 - [x] T03 [004-AS1] Écrire d'abord dans `application/trips.application.spec.ts` (« 004-AS1: lists the official lines of a site »), puis `ListOfficialLines`
 - [x] T04 [004-AS1, AS2, AS3, AS4] Écrire d'abord dans `apps/api/test/trips.e2e.spec.ts` (« 004-AS4: refuses a booking on an official line (404, TRIP_NOT_FOUND) »), puis `official-lines.controller.ts` et les déclarations dans `trips.module.ts`
+
+## 7. Corrections
+
+### Passage 1
+
+Écart bloquant relevé par le relecteur (base `d21f038^`).
+
+- [ ] T05 [004-AS4] Écrire d'abord dans `application/trips.application.spec.ts` (« 004-AS4: refuses a booking on an official line and records nothing »), un test où `BookSeat` sur l'identifiant d'une ligne officielle lève `TRIP_NOT_FOUND` et où le repository en mémoire n'a enregistré aucune réservation ; test de couverture, il peut passer d'emblée ; preuve : relecteur, `apps/api/test/trips.e2e.spec.ts:401-410` (« et rien n'est enregistré » n'est vérifié par aucun test)
