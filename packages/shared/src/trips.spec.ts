@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BOOKING_STATUSES,
+  bookingCodeParamsSchema,
+  bookingViewSchema,
+  cancelBookingSchema,
+  cancelTripSchema,
   bookSeatSchema,
   listTripsQuerySchema,
   publishTripSchema,
@@ -102,5 +107,46 @@ describe('tripIdParamsSchema', () => {
     const id = '0199f5c2-0000-7000-8000-000000000101';
     expect(tripIdParamsSchema.parse({ id })).toEqual({ id });
     expect(tripIdParamsSchema.safeParse({ id: 'abc' }).success).toBe(false);
+  });
+});
+
+describe('cancellation schemas', () => {
+  it('003-AS1: accepts an 8-character booking code, trimmed', () => {
+    expect(cancelBookingSchema.parse({ bookingCode: ' B7Q2M9XA ' })).toEqual({
+      bookingCode: 'B7Q2M9XA',
+    });
+    expect(cancelTripSchema.parse({ managementCode: 'K7Q2M9XA' })).toEqual({
+      managementCode: 'K7Q2M9XA',
+    });
+  });
+
+  it.each(['', 'ABC', 'B7Q2M9XAZ'])(
+    '003-AS2: rejects a code that is not 8 characters long (%j)',
+    (code) => {
+      expect(cancelBookingSchema.safeParse({ bookingCode: code }).error?.issues[0]?.path).toEqual([
+        'bookingCode',
+      ]);
+      expect(cancelTripSchema.safeParse({ managementCode: code }).error?.issues[0]?.path).toEqual([
+        'managementCode',
+      ]);
+      expect(bookingCodeParamsSchema.safeParse({ code }).error?.issues[0]?.path).toEqual(['code']);
+    },
+  );
+
+  it('003-AS6: knows the three booking statuses', () => {
+    expect(BOOKING_STATUSES).toEqual(['confirmee', 'annulee', 'trajet-annule']);
+    const view = {
+      id: '0199f5c2-0000-7000-8000-000000000201',
+      bookingCode: 'B7Q2M9XA',
+      status: 'trajet-annule',
+      tripId: '0199f5c2-0000-7000-8000-000000000101',
+      passengerName: 'Moussa',
+      departurePlace: 'Pikine',
+      departureAt: '2026-11-10T08:00:00.000Z',
+      driverPhone: '77 123 45 67',
+      createdAt: '2026-11-09T09:00:00.000Z',
+    };
+    expect(bookingViewSchema.parse(view)).toEqual(view);
+    expect(bookingViewSchema.safeParse({ ...view, status: 'perdue' }).success).toBe(false);
   });
 });

@@ -88,3 +88,29 @@ export const bookingConfirmationSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 export type BookingConfirmationResponse = z.infer<typeof bookingConfirmationSchema>;
+
+/** Statut d'une réservation consultée : si la réservation et le trajet sont annulés, `annulee` l'emporte. */
+export const BOOKING_STATUSES = ['confirmee', 'annulee', 'trajet-annule'] as const;
+export const bookingStatusSchema = z.enum(BOOKING_STATUSES);
+export type BookingStatus = z.infer<typeof bookingStatusSchema>;
+
+const code = (length: number) => z.string().trim().length(length);
+
+/** Corps de `POST /api/bookings/cancel`. */
+export const cancelBookingSchema = z.object({ bookingCode: code(BOOKING_CODE_LENGTH) });
+export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
+
+/** Corps de `POST /api/trips/cancel`. */
+export const cancelTripSchema = z.object({ managementCode: code(TRIP_MANAGEMENT_CODE_LENGTH) });
+export type CancelTripInput = z.infer<typeof cancelTripSchema>;
+
+/** Paramètre `:code` de `GET /api/bookings/:code`. */
+export const bookingCodeParamsSchema = z.object({ code: code(BOOKING_CODE_LENGTH) });
+
+/** Une réservation consultée avec son code : son statut, et de quoi rejoindre le conducteur. */
+export const bookingViewSchema = bookingConfirmationSchema.extend({ status: bookingStatusSchema });
+export type BookingViewResponse = z.infer<typeof bookingViewSchema>;
+
+/** La réponse à l'annulation d'un trajet. */
+export const cancelledTripSchema = z.object({ id: z.uuid(), cancelledAt: z.iso.datetime() });
+export type CancelledTripResponse = z.infer<typeof cancelledTripSchema>;
