@@ -44,3 +44,13 @@ describe('proposeTrip', () => {
     },
   );
 });
+
+describe('proposeTrip refusal messages', () => {
+  it('005-AS4: says that none of Dakar, Diamniadio and Saly was found', () => {
+    expect(() => proposeTrip({ ...extracted, site: null })).toThrow(/Dakar, Diamniadio and Saly/);
+  });
+
+  it('005-AS5: says that no departure time was found', () => {
+    expect(() => proposeTrip({ ...extracted, departureAt: null })).toThrow(/departure time/);
+  });
+});

@@ -510,9 +510,19 @@ describe('/api/trips/proposals (e2e, fake assistant)', () => {
     expect(response.body).toMatchObject({ status: 422, code: 'PROPOSAL_SITE_NOT_FOUND' });
   });
 
+  it('005-AS4: says that none of Dakar, Diamniadio and Saly was found', async () => {
+    const response = await propose({ ...ndiagaRead, site: null } as never, 422);
+    expect(response.body.detail).toMatch(/Dakar, Diamniadio and Saly/);
+  });
+
   it('005-AS5: refuses a message without a departure time (422, PROPOSAL_DEPARTURE_NOT_FOUND)', async () => {
     const response = await propose({ ...ndiagaRead, departureAt: null } as never, 422);
     expect(response.body).toMatchObject({ status: 422, code: 'PROPOSAL_DEPARTURE_NOT_FOUND' });
+  });
+
+  it('005-AS5: says that no departure time was found', async () => {
+    const response = await propose({ ...ndiagaRead, departureAt: null } as never, 422);
+    expect(response.body.detail).toMatch(/departure time/);
   });
 
   it('005-AS6: refuses when the assistant is unavailable (422, ASSISTANT_UNAVAILABLE)', async () => {
