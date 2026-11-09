@@ -12,6 +12,9 @@ export const ANTHROPIC_CLIENT = Symbol('ANTHROPIC_CLIENT');
 
 const MODEL = 'claude-opus-5-5';
 
+/** Le conducteur n'attend pas plus de 15 s : au-delà, le formulaire de TR1 lui reste. */
+const REQUEST_OPTIONS = { timeout: 15_000, maxRetries: 0 };
+
 /** Ce que Claude doit rendre : null pour tout ce que le message ne dit pas. */
 const extractionSchema = z.object({
   vehicle: z.enum(TRIP_VEHICLES).nullable(),
@@ -41,16 +44,19 @@ export class ClaudeTripExtractor extends TripExtractor {
   async extract(message: string, now: Date): Promise<ExtractedTrip> {
     let response;
     try {
-      response = await this.client.beta.messages.parse({
-        model: MODEL,
-        max_tokens: 1024,
-        // Refus d'un modèle : l'API relance la demande sur un autre, dans le même appel.
-        betas: ['server-side-fallback-2026-07-01'],
-        fallbacks: 'default',
-        output_config: { effort: 'low', format: betaZodOutputFormat(extractionSchema) },
-        system: SYSTEM,
-        messages: [{ role: 'user', content: userContent(message, now) }],
-      });
+      response = await this.client.beta.messages.parse(
+        {
+          model: MODEL,
+          max_tokens: 1024,
+          // Refus d'un modèle : l'API relance la demande sur un autre, dans le même appel.
+          betas: ['server-side-fallback-2026-07-01'],
+          fallbacks: 'default',
+          output_config: { effort: 'low', format: betaZodOutputFormat(extractionSchema) },
+          system: SYSTEM,
+          messages: [{ role: 'user', content: userContent(message, now) }],
+        },
+        REQUEST_OPTIONS,
+      );
     } catch {
       // Panne réseau, limite atteinte, ou clé absente (le SDK lève alors une simple Error, pas une
       // AnthropicError) : quelle que soit la cause, le conducteur garde le formulaire de TR1.

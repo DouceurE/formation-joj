@@ -88,3 +88,25 @@ describe('ClaudeTripExtractor without an API key', () => {
     );
   });
 });
+
+describe('ClaudeTripExtractor time limit', () => {
+  it('005-AS6: gives up after 15 seconds without retrying', async () => {
+    // Le faux client simule le dépassement : il lit les options reçues, puis lève le délai dépassé.
+    const options: unknown[] = [];
+    const client = {
+      beta: {
+        messages: {
+          parse: async (_params: unknown, requestOptions: unknown) => {
+            options.push(requestOptions);
+            throw new Anthropic.APIConnectionTimeoutError();
+          },
+        },
+      },
+    } as unknown as Anthropic;
+
+    await expect(new ClaudeTripExtractor(client).extract(MESSAGE, NOW)).rejects.toThrow(
+      unavailable,
+    );
+    expect(options).toEqual([{ timeout: 15_000, maxRetries: 0 }]);
+  });
+});
