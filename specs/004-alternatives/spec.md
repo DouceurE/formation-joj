@@ -1,6 +1,6 @@
 # 004 — Alternatives officielles
 
-**Statut** : Validée
+**Statut** : Implémentée
 **PRD** : specs/prd-covoiturage.md, TR4
 
 ## Contexte
