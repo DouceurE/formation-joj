@@ -531,3 +531,50 @@ describe('/api/trips/proposals (e2e, fake assistant)', () => {
     expect(response.body.detail).toMatch(/form/);
   });
 });
+
+describe('/api/trips/proposals publishes nothing when it refuses (e2e, fake assistant)', () => {
+  let app: INestApplication;
+  const api = () => request(app.getHttpServer());
+  const day = '2031-05-10';
+  const read = {
+    vehicle: 'ndiaga-ndiaye',
+    departurePlace: 'Pikine',
+    site: 'diamniadio',
+    departureAt: `${day}T08:00:00.000Z`,
+    seats: 38,
+    priceFcfa: null,
+  };
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(() => app?.close());
+
+  async function refusedThenListed(answer: Record<string, unknown> | 'fail', code: string) {
+    const assistant = app.get<TripExtractor, FakeTripExtractor>(TripExtractor);
+    if (answer === 'fail') assistant.willFail();
+    else assistant.willReturn(answer as never);
+    const response = await api()
+      .post('/api/trips/proposals')
+      .send({ message: 'je pars de Pikine demain 8h' })
+      .expect(422);
+    expect(response.body.code).toBe(code);
+    const listed = await api().get(`/api/trips?site=diamniadio&date=${day}`).expect(200);
+    return listed.body;
+  }
+
+  it('005-AS4: publishes nothing for a message without a known site', async () => {
+    expect(await refusedThenListed({ ...read, site: null }, 'PROPOSAL_SITE_NOT_FOUND')).toEqual([]);
+  });
+
+  it('005-AS5: publishes nothing for a message without a departure time', async () => {
+    expect(
+      await refusedThenListed({ ...read, departureAt: null }, 'PROPOSAL_DEPARTURE_NOT_FOUND'),
+    ).toEqual([]);
+  });
+
+  it('005-AS6: publishes nothing when the assistant is unavailable', async () => {
+    expect(await refusedThenListed('fail', 'ASSISTANT_UNAVAILABLE')).toEqual([]);
+  });
+});

@@ -289,3 +289,19 @@ describe('proposing a trip from a message (application layer)', () => {
     });
   });
 });
+
+describe('nothing is published when no proposal is made (application layer)', () => {
+  it('005-AS6: publishes nothing when the assistant is unavailable', async () => {
+    const { trips, publishTrip, listTrips } = setup();
+    // Un vrai trajet en base, pour que « rien n'est publié » ne soit pas trivialement vrai.
+    await publishTrip.execute(ndiaga);
+    const extractor = new FakeTripExtractor();
+    extractor.willFail();
+
+    await expect(
+      new ProposeTripFromMessage(extractor).execute({ message: 'je pars demain 8h' }),
+    ).rejects.toMatchObject({ code: 'ASSISTANT_UNAVAILABLE' });
+    expect(await listTrips.execute({ site: 'diamniadio', date: FUTURE_DAY })).toHaveLength(1);
+    expect(trips.bookings).toEqual([]);
+  });
+});
