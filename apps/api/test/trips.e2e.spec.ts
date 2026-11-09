@@ -6,9 +6,12 @@ import {
   officialLineListSchema,
   publishedTripSchema,
   tripListSchema,
+  tripProposalSchema,
 } from '@joj/shared';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { TripExtractor } from '../src/modules/trips/application/trip-extractor';
+import type { FakeTripExtractor } from '../src/modules/trips/application/testing/fake-trip-extractor';
 import { createTestApp } from './create-test-app';
 
 // L'API lit la vraie horloge : un jour lointain pour les départs à venir.
@@ -407,5 +410,89 @@ describe('/api/official-lines (e2e)', () => {
       .expect(404);
 
     expect(response.body).toMatchObject({ status: 404, code: 'TRIP_NOT_FOUND' });
+  });
+});
+
+describe('/api/trips/proposals (e2e, fake assistant)', () => {
+  let app: INestApplication;
+  const api = () => request(app.getHttpServer());
+  const message = 'je pars de Pikine pour Diamniadio demain 8h, Ndiaga 38 places';
+  const ndiagaRead = {
+    vehicle: 'ndiaga-ndiaye',
+    departurePlace: 'Pikine',
+    site: 'diamniadio',
+    departureAt: '2031-04-10T08:00:00.000Z',
+    seats: 38,
+    priceFcfa: null,
+  };
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(() => app?.close());
+
+  async function propose(answer: typeof ndiagaRead | 'fail', expected: number) {
+    // createTestApp remplace l'assistant par le faux : aucun test n'appelle Claude.
+    const assistant = app.get<TripExtractor, FakeTripExtractor>(TripExtractor);
+    if (answer === 'fail') assistant.willFail();
+    else assistant.willReturn(answer);
+    return api().post('/api/trips/proposals').send({ message }).expect(expected);
+  }
+
+  it('005-AS1: proposes the trip read in the message (200) without publishing it', async () => {
+    const response = await propose(ndiagaRead, 200);
+
+    expect(tripProposalSchema.parse(response.body)).toEqual(ndiagaRead);
+    const listed = await api().get('/api/trips?site=diamniadio&date=2031-04-10').expect(200);
+    expect(listed.body).toEqual([]);
+  });
+
+  it('005-AS2: publishes the completed proposal through TR1', async () => {
+    const proposal = (
+      await propose({ ...ndiagaRead, departureAt: '2031-04-11T08:00:00.000Z' }, 200)
+    ).body;
+
+    const published = await api()
+      .post('/api/trips')
+      .send({ ...proposal, priceFcfa: 500, driverPhone: '77 123 45 67' })
+      .expect(201);
+
+    expect(published.body.managementCode).toMatch(/^[A-HJ-NP-Z2-9]{8}$/);
+    const listed = await api().get('/api/trips?site=diamniadio&date=2031-04-11').expect(200);
+    expect(tripListSchema.parse(listed.body)[0]?.remainingSeats).toBe(38);
+  });
+
+  it('005-AS3: applies the rules of TR1 when the proposal is confirmed (400, 422)', async () => {
+    const car = (await propose({ ...ndiagaRead, vehicle: 'voiture', seats: 5 }, 200)).body;
+    const tooMany = await api()
+      .post('/api/trips')
+      .send({ ...car, priceFcfa: 0, driverPhone: '77 123 45 67' })
+      .expect(400);
+    expect(tooMany.body).toMatchObject({ status: 400, code: 'SEATS_OUT_OF_RANGE' });
+
+    const past = (await propose({ ...ndiagaRead, departureAt: '2020-01-01T08:00:00.000Z' }, 200))
+      .body;
+    const late = await api()
+      .post('/api/trips')
+      .send({ ...past, priceFcfa: 0, driverPhone: '77 123 45 67' })
+      .expect(422);
+    expect(late.body).toMatchObject({ status: 422, code: 'DEPARTURE_IN_PAST' });
+  });
+
+  it('005-AS4: refuses a message without a known site (422, PROPOSAL_SITE_NOT_FOUND)', async () => {
+    const response = await propose({ ...ndiagaRead, site: null } as never, 422);
+    expect(response.body).toMatchObject({ status: 422, code: 'PROPOSAL_SITE_NOT_FOUND' });
+  });
+
+  it('005-AS5: refuses a message without a departure time (422, PROPOSAL_DEPARTURE_NOT_FOUND)', async () => {
+    const response = await propose({ ...ndiagaRead, departureAt: null } as never, 422);
+    expect(response.body).toMatchObject({ status: 422, code: 'PROPOSAL_DEPARTURE_NOT_FOUND' });
+  });
+
+  it('005-AS6: refuses when the assistant is unavailable (422, ASSISTANT_UNAVAILABLE)', async () => {
+    const response = await propose('fail', 422);
+    expect(response.body).toMatchObject({ status: 422, code: 'ASSISTANT_UNAVAILABLE' });
+    expect(response.body.detail).toMatch(/form/);
   });
 });

@@ -11,6 +11,9 @@ import {
   type PublishedTripResponse,
   publishedTripSchema,
   publishTripSchema,
+  proposeTripSchema,
+  type TripProposalResponse,
+  tripProposalSchema,
   type TripResponse,
   tripIdParamsSchema,
   tripSchema,
@@ -19,6 +22,7 @@ import { createZodDto, ZodSerializerDto } from 'nestjs-zod';
 import { type BookingConfirmation, BookSeat } from '../application/use-cases/book-seat';
 import { CancelTrip } from '../application/use-cases/cancel-trip';
 import { ListTrips } from '../application/use-cases/list-trips';
+import { ProposeTripFromMessage } from '../application/use-cases/propose-trip-from-message';
 import { PublishTrip } from '../application/use-cases/publish-trip';
 import type { Trip } from '../domain/trip';
 
@@ -31,6 +35,8 @@ class BookSeatDto extends createZodDto(bookSeatSchema) {}
 class BookingConfirmationDto extends createZodDto(bookingConfirmationSchema) {}
 class CancelTripDto extends createZodDto(cancelTripSchema) {}
 class CancelledTripDto extends createZodDto(cancelledTripSchema) {}
+class ProposeTripDto extends createZodDto(proposeTripSchema) {}
+class TripProposalDto extends createZodDto(tripProposalSchema) {}
 
 /** Couche fine : valider (DTO zod), appeler un cas d'usage, sérialiser. Aucune règle métier ici. */
 @ApiTags('trips')
@@ -41,6 +47,7 @@ export class TripsController {
     private readonly listTrips: ListTrips,
     private readonly bookSeat: BookSeat,
     private readonly cancelTrip: CancelTrip,
+    private readonly proposeTripFromMessage: ProposeTripFromMessage,
   ) {}
 
   @Post()
@@ -63,6 +70,15 @@ export class TripsController {
   async cancel(@Body() body: CancelTripDto): Promise<CancelledTripResponse> {
     const { trip, cancelledAt } = await this.cancelTrip.execute(body);
     return { id: trip.id, cancelledAt: cancelledAt.toISOString() };
+  }
+
+  @Post('proposals')
+  @HttpCode(200)
+  @ZodSerializerDto(TripProposalDto)
+  async propose(@Body() body: ProposeTripDto): Promise<TripProposalResponse> {
+    const proposal = await this.proposeTripFromMessage.execute(body);
+    // Rien n'est publié : le conducteur relit, complète, puis appelle POST /api/trips.
+    return { ...proposal, departureAt: proposal.departureAt.toISOString() };
   }
 
   @Post(':id/bookings')
