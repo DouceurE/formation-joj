@@ -121,6 +121,19 @@ describe('/api/trips (e2e)', () => {
     }
   });
 
+  it('001-AS4: publishes a trip priced 3 000 000 000 FCFA without a server error', async () => {
+    const response = await api()
+      .post('/api/trips')
+      .send({ ...ndiaga, site: 'dakar', departureAt: '2030-12-01T08:00:00.000Z', priceFcfa: 3e9 })
+      .expect(201);
+    expect(response.body.priceFcfa).toBe(3_000_000_000);
+
+    const listed = await api().get('/api/trips?site=dakar&date=2030-12-01').expect(200);
+    expect(listed.body.map((trip: { priceFcfa: number }) => trip.priceFcfa)).toEqual([
+      3_000_000_000,
+    ]);
+  });
+
   it('001-AS6: returns an empty list for a day without departure (200)', async () => {
     const response = await api().get('/api/trips?site=saly&date=2030-11-12').expect(200);
     expect(response.body).toEqual([]);

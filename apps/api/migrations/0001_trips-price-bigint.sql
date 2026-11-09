@@ -1,0 +1,1 @@
+ALTER TABLE "trips" ALTER COLUMN "price_fcfa" SET DATA TYPE bigint;

@@ -1,5 +1,13 @@
 // Lu par drizzle-kit pour générer les migrations : ce fichier n'importe que drizzle-orm.
-import { integer, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  integer,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 export const TRIPS_MANAGEMENT_CODE_KEY = 'trips_management_code_key';
 
@@ -14,7 +22,8 @@ export const trips = pgTable(
     // Précision milliseconde = celle de Date en JavaScript.
     departureAt: timestamp('departure_at', { withTimezone: true, precision: 3 }).notNull(),
     seats: integer('seats').notNull(),
-    priceFcfa: integer('price_fcfa').notNull(),
+    // bigint : le prix n'a pas de plafond métier, il doit tenir tout entier accepté par zod.
+    priceFcfa: bigint('price_fcfa', { mode: 'number' }).notNull(),
     driverPhone: varchar('driver_phone', { length: 20 }).notNull(),
     managementCode: varchar('management_code', { length: 8 }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).notNull(),
