@@ -29,6 +29,8 @@ afterEach(() => {
   server.events.removeAllListeners();
   // Latence, pannes armées et données d'origine : un test ne dépend jamais d'un autre.
   mockControl.reset();
+  // Les codes gardés dans le téléphone (« Mes trajets ») : un test n'hérite pas de ceux d'un autre.
+  window.localStorage.clear();
 });
 
 afterAll(() => server.close());
