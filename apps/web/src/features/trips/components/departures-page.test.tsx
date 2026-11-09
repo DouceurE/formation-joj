@@ -138,3 +138,13 @@ describe('DeparturesPage departure details', () => {
     }
   });
 });
+
+describe('DeparturesPage full trip', () => {
+  it('007-AS4: shows a full trip as « 0 place restante » in the departures', async () => {
+    await renderRoute({ initialEntries: ['/departs?site=diamniadio&date=2026-11-11'] });
+
+    const [full] = await departuresList();
+    expect(full).toHaveTextContent('0 place restante');
+    expect(full).not.toHaveTextContent('0 places restantes');
+  });
+});
