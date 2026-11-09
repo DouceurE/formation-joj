@@ -12,3 +12,8 @@ export function generateManagementCode(): string {
   }
   return code;
 }
+
+/** Le code remis au supporter pour gérer sa réservation (TR3). */
+export function generateBookingCode(): string {
+  return generateManagementCode();
+}

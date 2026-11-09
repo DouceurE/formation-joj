@@ -4,6 +4,7 @@ import { and, asc, eq, gte, lt } from 'drizzle-orm';
 import type { Database } from '../../../core/database/database';
 import { DATABASE } from '../../../core/database/database.module';
 import { TripRepository } from '../application/trip.repository';
+import type { Booking } from '../domain/booking';
 import type { Trip } from '../domain/trip';
 import { toDomain, toRow } from './trip.mapper';
 import { trips } from './trips.schema';
@@ -12,6 +13,14 @@ import { trips } from './trips.schema';
 export class DrizzleTripRepository extends TripRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {
     super();
+  }
+
+  async findById(_id: string): Promise<Trip | null> {
+    throw new Error('non implémenté');
+  }
+
+  async addBooking(_booking: Booking): Promise<void> {
+    throw new Error('non implémenté');
   }
 
   async insert(trip: Trip): Promise<void> {
