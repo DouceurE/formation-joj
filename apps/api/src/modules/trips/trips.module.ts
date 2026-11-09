@@ -4,14 +4,16 @@ import { BookSeat } from './application/use-cases/book-seat';
 import { CancelBooking } from './application/use-cases/cancel-booking';
 import { CancelTrip } from './application/use-cases/cancel-trip';
 import { GetBooking } from './application/use-cases/get-booking';
+import { ListOfficialLines } from './application/use-cases/list-official-lines';
 import { ListTrips } from './application/use-cases/list-trips';
 import { PublishTrip } from './application/use-cases/publish-trip';
 import { BookingsController } from './http/bookings.controller';
+import { OfficialLinesController } from './http/official-lines.controller';
 import { TripsController } from './http/trips.controller';
 import { DrizzleTripRepository } from './infra/drizzle-trip.repository';
 
 @Module({
-  controllers: [TripsController, BookingsController],
+  controllers: [TripsController, BookingsController, OfficialLinesController],
   providers: [
     // Le port (classe abstraite) est relié ici à son implémentation Drizzle.
     { provide: TripRepository, useClass: DrizzleTripRepository },
@@ -21,6 +23,7 @@ import { DrizzleTripRepository } from './infra/drizzle-trip.repository';
     CancelTrip,
     CancelBooking,
     GetBooking,
+    ListOfficialLines,
   ],
 })
 export class TripsModule {}

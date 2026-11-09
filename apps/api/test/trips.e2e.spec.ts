@@ -3,6 +3,7 @@ import {
   bookingConfirmationSchema,
   bookingViewSchema,
   cancelledTripSchema,
+  officialLineListSchema,
   publishedTripSchema,
   tripListSchema,
 } from '@joj/shared';
@@ -353,5 +354,58 @@ describe('cancellations (e2e)', () => {
       .expect(422);
 
     expect(response.body).toMatchObject({ status: 422, code: 'TRIP_CANCELLED' });
+  });
+});
+
+describe('/api/official-lines (e2e)', () => {
+  let app: INestApplication;
+  const api = () => request(app.getHttpServer());
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(() => app?.close());
+
+  async function officialLines(site: string) {
+    const response = await api().get(`/api/official-lines?site=${site}`).expect(200);
+    return officialLineListSchema.parse(response.body);
+  }
+
+  it('004-AS1: lists the 2 official lines to Diamniadio, beside unchanged carpools', async () => {
+    await api()
+      .post('/api/trips')
+      .send({ ...ndiaga, departureAt: '2031-03-01T08:00:00.000Z' })
+      .expect(201);
+
+    const lines = await officialLines('diamniadio');
+    expect(lines.map((line) => [line.operator, line.site])).toEqual([
+      ['navette-joj', 'diamniadio'],
+      ['dakar-dem-dikk', 'diamniadio'],
+    ]);
+    for (const line of lines) expect(line.departurePoint).not.toBe('');
+    const trips = await api().get('/api/trips?site=diamniadio&date=2031-03-01').expect(200);
+    expect(tripListSchema.parse(trips.body)).toHaveLength(1);
+  });
+
+  it('004-AS2: still lists the official lines on a day without carpool', async () => {
+    const trips = await api().get('/api/trips?site=diamniadio&date=2031-03-12').expect(200);
+    expect(trips.body).toEqual([]);
+    expect(await officialLines('diamniadio')).toHaveLength(2);
+  });
+
+  it('004-AS3: returns an empty list for a site without official line (200)', async () => {
+    expect(await officialLines('dakar')).toEqual([]);
+  });
+
+  it('004-AS4: refuses a booking on an official line (404, TRIP_NOT_FOUND)', async () => {
+    const [line] = await officialLines('diamniadio');
+
+    const response = await api()
+      .post(`/api/trips/${line?.id}/bookings`)
+      .send({ passengerName: 'Moussa', passengerPhone: '78 555 66 77' })
+      .expect(404);
+
+    expect(response.body).toMatchObject({ status: 404, code: 'TRIP_NOT_FOUND' });
   });
 });
