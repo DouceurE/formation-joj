@@ -33,6 +33,12 @@ const TRIP_ERROR_KINDS = {
   TRIP_ALREADY_CANCELLED: 'CONFLICT',
   /** On ne réserve pas sur un trajet annulé. */
   TRIP_CANCELLED: 'BUSINESS_RULE',
+  /** L'assistant n'a trouvé aucun des trois sites dans le message. */
+  PROPOSAL_SITE_NOT_FOUND: 'BUSINESS_RULE',
+  /** L'assistant n'a trouvé aucune heure de départ dans le message. */
+  PROPOSAL_DEPARTURE_NOT_FOUND: 'BUSINESS_RULE',
+  /** L'assistant n'a pas répondu, a refusé, ou a renvoyé une réponse illisible. */
+  ASSISTANT_UNAVAILABLE: 'BUSINESS_RULE',
 } as const satisfies Record<string, ErrorKind>;
 
 export type TripErrorCode = keyof typeof TRIP_ERROR_KINDS;
@@ -71,6 +77,14 @@ export function tripAlreadyCancelled(id: string): TripError {
 
 export function tripCancelled(id: string): TripError {
   return new TripError('TRIP_CANCELLED', `Trip ${id} has been cancelled by its driver`, { id });
+}
+
+/** Le conducteur garde une solution : le formulaire de publication de TR1. */
+export function assistantUnavailable(): TripError {
+  return new TripError(
+    'ASSISTANT_UNAVAILABLE',
+    'The assistant could not read the message; please fill in the trip form instead',
+  );
 }
 
 /** Un champ texte obligatoire : sans espaces autour, non vide, pas trop long. */
